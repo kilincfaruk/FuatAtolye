@@ -1,16 +1,64 @@
-# React + Vite
+# FuatAtolye
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Atölye yönetimi için müşteri, işlem, tahsilat, gider ve fiyat listesi yönetimi sunan React + Supabase uygulaması.
 
-Currently, two official plugins are available:
+## Özellikler
+- İşlem, ödeme ve gider kayıtları
+- Yapılan iş / fiyat listesi yönetimi
+- Has altın ve gümüş takibi
+- Dashboard özetleri ve müşteri bazlı bakiye görünümü
+- Adisyon yazdırma
+- Canlı altın fiyatı (serverless API)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Kurulum
 
-## React Compiler
+### 1) Ortam değişkenleri
+`.env` dosyası oluşturun:
+```
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 2) Bağımlılıklar
+```
+npm install
+```
 
-## Expanding the ESLint configuration
+### 3) Local geliştirme
+```
+npm run dev
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Sunucu / API
+
+### Local altın fiyatı (opsiyonel)
+Server klasörünü ayrı başlatabilirsiniz:
+```
+cd server
+npm install
+npm run dev
+```
+
+### Vercel serverless endpoint
+Üretimde altın fiyatı için `/api/gold-price` endpoint’i kullanılır.
+Vercel’de aşağıdaki değişkenleri ekleyin:
+```
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+GOLDAPI_KEY
+```
+
+## Supabase
+Şema dosyaları `supabase/` klasöründedir. Yeni kolonlar için:
+```
+supabase/schema.sql
+```
+
+Gümüş tahsilat için gerekli kolon:
+```
+ALTER TABLE public.payments
+ADD COLUMN IF NOT EXISTS silver_amount numeric;
+```
+
+## Deploy
+Vercel kullanımı önerilir. Environment variables ekleyip deploy edin.
