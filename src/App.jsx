@@ -10,11 +10,9 @@ import {
 import * as XLSX from 'xlsx';
 import { supabase } from './supabaseClient.js';
 
-// --- Constants & Mock Data Configuration ---
 
 const APP_NAME = "KUYUMCU ATÖLYESİ";
 
-// --- Helper Functions ---
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(amount);
@@ -47,9 +45,7 @@ const BTN_TONAL = `${BTN_BASE} bg-slate-100 text-slate-700 hover:bg-slate-200`;
 const BTN_ICON = "p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-900/10";
 const TAB_BASE = "flex-1 text-sm font-semibold rounded-lg px-3 py-2 transition-colors";
 
-// Mock generation functions removed.
 
-// --- Components ---
 
 const Toast = ({ message, type, onClose }) => {
   const icons = {
@@ -160,7 +156,6 @@ const StatCard = ({ title, value, subtext, icon: Icon, iconClass, onClick }) => 
 
 
 
-// --- Extracted Price List ---
 const TRANSACTION_PRICES = [
   { name: "YÜZÜK KÜÇÜLME", price: "150" },
   { name: "ZİNCİR YALDIZ", price: "150 - 250" },
@@ -213,10 +208,9 @@ const TRANSACTION_PRICES = [
 ];
 
 const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers = [], workTypes = [] }) => {
-  const [activeTab, setActiveTab] = useState('job'); // 'job', 'expense', 'payment'
+  const [activeTab, setActiveTab] = useState('job');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Job Form State
   const [jobData, setJobData] = useState({
     customer: '',
     quantity: 1,
@@ -228,7 +222,6 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
     date: new Date().toISOString().split('T')[0]
   });
 
-  // Expense Form State
   const [expenseData, setExpenseData] = useState({
     type: 'Diğer',
     description: '',
@@ -236,7 +229,6 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
     date: new Date().toISOString().split('T')[0]
   });
 
-  // Payment Form State
   const [paymentData, setPaymentData] = useState({
     customer: '',
     hasAmount: '',
@@ -286,7 +278,6 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
     return v.includes('silver') || v.includes('gümüş') || v.includes('gumus');
   };
 
-  // --- JOB CALCULATIONS ---
   const calculatedJobHas = useMemo(() => {
     if (jobData.goldWeight) {
       const g = parseFloat(jobData.goldWeight);
@@ -307,7 +298,6 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
     setJobData({ ...jobData, jobType: name, price });
   };
 
-  // --- SUBMIT HANDLERS ---
   const handleJobSubmit = async (e) => {
     e.preventDefault();
     if (isSubmitting) {
@@ -358,7 +348,6 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
     }
   };
 
-  // --- PRINT HANDLER ---
   const handlePrint = (e) => {
     e.preventDefault();
     if (!jobData.customer || !jobData.jobType) {
@@ -504,7 +493,6 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-7">
           <Tabs />
 
-          {/* --- JOB FORM --- */}
           {activeTab === 'job' && (
             <form onSubmit={handleJobSubmit} className="space-y-6">
               <div>
@@ -670,7 +658,6 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
             </form>
           )}
 
-          {/* --- PAYMENT FORM --- */}
           {activeTab === 'payment' && (
             <form onSubmit={handlePaymentSubmit} className="space-y-6">
               <div>
@@ -743,7 +730,6 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
             </form>
           )}
 
-          {/* --- EXPENSE FORM --- */}
           {activeTab === 'expense' && (
             <form onSubmit={handleExpenseSubmit} className="space-y-6">
               <div>
@@ -823,7 +809,6 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
   const [expenseTypeFilter, setExpenseTypeFilter] = useState('Tümü');
   const [expenseQuery, setExpenseQuery] = useState('');
 
-  // Fetch gold price from backend API
   useEffect(() => {
     const fetchGoldPrice = async () => {
       try {
@@ -835,24 +820,19 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
           setGoldUpdatedAt(new Date());
         }
       } catch (error) {
-        // Gold price fetch error - silently fail
       }
     };
 
-    // Initial fetch
     fetchGoldPrice();
 
-    // Fetch every 10 seconds
     const interval = setInterval(fetchGoldPrice, 10000);
 
     return () => clearInterval(interval);
   }, []);
 
-  // Filter Data
   const filteredData = useMemo(() => {
     let currentData = data;
 
-    // Filter by Customer
     if (customerFilter) {
       if (currentData[customerFilter]) {
         currentData = { [customerFilter]: currentData[customerFilter] };
@@ -877,7 +857,6 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
     return filtered;
   }, [data, dateRange, customerFilter]);
 
-  // Derived Statistics
   const stats = useMemo(() => {
     const isSilver = (value) => {
       const v = (value || '').toString().toLowerCase();
@@ -902,7 +881,6 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
       let cCount = 0;
 
       transactions.forEach(t => {
-        // Handle Legacy + New Schema
         const isJob = t.type === 'job' || (!t.type && t.tamiratIsi);
         const isPayment = t.type === 'payment';
 
@@ -959,7 +937,6 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
     return { totalIncome, totalReceivables, totalHasReceivables, totalSilverReceivables, totalTransactions, totalGoldVolume, totalSilverVolume, activeCustomer, customerStats };
   }, [filteredData]);
 
-  // Filter Expenses
   const totalExpense = useMemo(() => {
     if (!expenses) return 0;
     const start = new Date(dateRange.start).getTime();
@@ -992,7 +969,6 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
     });
   }, [filteredExpenses, expenseTypeFilter, expenseQuery]);
 
-  // Chart Data
   const chartData = useMemo(() => {
     const topCustomers = [...stats.customerStats]
       .sort((a, b) => b.income - a.income)
@@ -1025,7 +1001,6 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
   }, [stats, filteredData]);
 
 
-  // Sorting
   const sortedCustomers = useMemo(() => {
     let sortableItems = [...stats.customerStats];
     if (sortConfig.key) {
@@ -1048,7 +1023,6 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
 
   return (
     <div className="min-h-screen bg-slate-50 pb-12">
-      {/* Navbar */}
       <nav className="bg-blue-900 text-white shadow-lg sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -1111,7 +1085,6 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-        {/* Header & Filter */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="w-full sm:w-auto">
             <h1 className="text-2xl font-bold text-slate-800">Genel Bakış</h1>
@@ -1288,7 +1261,6 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
           </div>
         </div>
 
-        {/* Live Gold Price Banner (Home Page) */}
         {goldPrice && (
           <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
             <div className="flex items-center gap-4">
@@ -1326,7 +1298,6 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
           </div>
         )}
 
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           <StatCard
             title="Toplam Tahsilat"
@@ -1341,13 +1312,13 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
             icon={ArrowUpDown}
             onClick={() => setShowExpenseModal(true)}
           />
-          <StatCard // Replaced 'Total Receivables' with 'Cash Receivables' or just 'Alacak'
+          <StatCard
             title="Nakit Alacak"
             value={formatCurrency(stats.totalReceivables)}
             iconClass="bg-amber-50 text-amber-600"
             icon={ArrowUpDown}
           />
-          <StatCard // Replaced 'Total Gold' with 'Gold Balance'
+          <StatCard
             title="Has Alacak (Gr)"
             value={`${formatNumber(stats.totalHasReceivables)}`}
             iconClass="bg-indigo-50 text-indigo-600"
@@ -1361,7 +1332,6 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
           />
         </div>
 
-        {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
             <h3 className="text-lg font-bold text-slate-800 mb-6">En Çok Kazandıran Müşteriler</h3>
@@ -1412,7 +1382,6 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
           </div>
         </div>
 
-        {/* Conditional Content: Customer Table OR Inline Detail */}
         {!customerFilter ? (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="p-6 border-b border-slate-200">
@@ -1492,7 +1461,6 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
           />
         )}
 
-        {/* Modal only if NOT filtered and a customer is selected via click */}
         {!customerFilter && selectedCustomer && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setSelectedCustomer(null)}>
             <div className="bg-white rounded-3xl shadow-xl border border-slate-200 w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
@@ -1638,12 +1606,10 @@ const CustomerDetail = ({ customer, transactions, dateRange, onClose, isInline =
     showToast('Excel başarıyla indirildi.', 'success');
   };
 
-  // 1. Sort All Transactions by Date (Newest First)
   const allSorted = [...transactions].sort((a, b) => {
     return new Date(b.date || b.tarih) - new Date(a.date || a.tarih);
   });
 
-  // 2. Filter Logic & Devir Calculation
   const startDate = new Date(dateRange.start).getTime();
   const endDate = new Date(dateRange.end).getTime();
 
@@ -1653,8 +1619,6 @@ const CustomerDetail = ({ customer, transactions, dateRange, onClose, isInline =
   allSorted.forEach(t => {
     const tDate = new Date(t.date || t.tarih).getTime();
 
-    // Check if it is AFTER the end date (Future relative to filter)
-    // We include up to end of the day roughly, simplified comparison
     if (tDate > endDate + 86400000) {
       return;
     }
@@ -1662,7 +1626,6 @@ const CustomerDetail = ({ customer, transactions, dateRange, onClose, isInline =
     if (tDate >= startDate) {
       periodData.push(t);
     } else {
-      // It is BEFORE start date. Contribute to Devir.
       const isJob = t.type === 'job' || (!t.type && t.tamiratIsi);
       const isPayment = t.type === 'payment';
 
@@ -1682,14 +1645,12 @@ const CustomerDetail = ({ customer, transactions, dateRange, onClose, isInline =
   const devirCash = previousJobPrice - previousPaidCash;
   const devirHas = previousJobHas - previousPaidHas;
 
-  // Pagination
   const totalPages = Math.ceil(periodData.length / itemsPerPage);
   const currentData = periodData.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  // Period Totals
   const periodTotals = periodData.reduce((acc, t) => {
     const isJob = t.type === 'job' || (!t.type && t.tamiratIsi);
     const isPayment = t.type === 'payment';
@@ -1725,7 +1686,6 @@ const CustomerDetail = ({ customer, transactions, dateRange, onClose, isInline =
 
   return (
     <div className={`flex flex-col h-full ${isInline ? 'bg-white rounded-2xl shadow-sm border border-slate-200' : ''}`}>
-      {/* Header */}
       <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50/60">
         <div>
           <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
@@ -1775,7 +1735,6 @@ const CustomerDetail = ({ customer, transactions, dateRange, onClose, isInline =
       </div>
 
       <div ref={pdfRef} className="flex-1 overflow-auto bg-white p-4">
-        {/* PDF Header (Only visible in PDF/Print context conceptually, but here we capture the div) */}
         <div className="hidden printable-header mb-8 border-b-2 border-blue-900 pb-4">
           <div className="flex justify-between items-start">
             <div>
@@ -1789,7 +1748,6 @@ const CustomerDetail = ({ customer, transactions, dateRange, onClose, isInline =
           </div>
         </div>
 
-        {/* Table Content */}
         <div className="flex-1 overflow-auto p-0">
           <table className="tx-table w-full text-left border-collapse">
             <thead className="bg-slate-50/70 sticky top-0 z-10">
@@ -1884,7 +1842,6 @@ const CustomerDetail = ({ customer, transactions, dateRange, onClose, isInline =
                 );
               })}
 
-              {/* DEVIR ROW */}
               {currentPage === totalPages && (
                 <tr className="bg-slate-50 border-t-2 border-slate-200">
                   <td className="px-6 py-4 text-sm text-slate-500 italic block min-w-[120px]">
@@ -1912,7 +1869,6 @@ const CustomerDetail = ({ customer, transactions, dateRange, onClose, isInline =
           )}
         </div>
 
-        {/* Footer / Pagination */}
         {totalPages > 1 && (
           <div className="p-4 border-t border-slate-200 flex items-center justify-between bg-white rounded-b-2xl pdf-hide">
             <button
@@ -2199,7 +2155,6 @@ const AdminPanel = ({ customers, data, workTypes, onAddCustomer, onDeleteCustome
 };
 
 
-// --- App Container ---
 
 
 function App() {
@@ -2313,7 +2268,6 @@ function App() {
     setExpenses(expensesRes.data || []);
   };
 
-  // Auth & Data Load - Gün boyu açık kalacak uygulama için optimize edildi
   useEffect(() => {
     let mounted = true;
     let refreshInterval = null;
@@ -2325,7 +2279,6 @@ function App() {
         const { data, error } = await supabase.auth.getSession();
         if (!mounted) return;
         if (error) {
-          // Hata durumunda yeniden dene
           if (retryCount < MAX_RETRIES) {
             retryCount++;
             setTimeout(init, 3000); // 3 saniye sonra tekrar dene
@@ -2359,13 +2312,11 @@ function App() {
     };
     init();
 
-    // Her 5 dakikada bir verileri yenile (gün boyu açık kalacak uygulama için)
     refreshInterval = setInterval(async () => {
       if (mounted && isAuthenticated) {
         try {
           await fetchAllData();
         } catch (err) {
-          // Silent refresh error
         }
       }
     }, 5 * 60 * 1000); // 5 dakika
@@ -2380,10 +2331,8 @@ function App() {
       setUser(session?.user || null);
       setIsAuthenticated(!!session);
       
-      // İlk yükleme zaten init() tarafından yapıldı, SIGNED_IN event'ini görmezden gel
       if (event === 'SIGNED_IN') {
         if (!hasInitialized) {
-          // Sadece gerçek yeni girişlerde veri çek (init'ten sonra olmamalı ama güvenlik için)
           hasInitialized = true;
           await fetchAllData();
           lastFetchTime = Date.now();
@@ -2398,17 +2347,14 @@ function App() {
       setIsAuthLoading(false);
     });
 
-    // Sayfa görünür olduğunda verileri yenile (sekme değişikliği sonrası) - debounce ile
     let visibilityTimeout = null;
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && mounted && isAuthenticated) {
-        // Son fetch'ten en az 10 saniye geçmişse yenile
         const now = Date.now();
         if (now - lastFetchTime < MIN_FETCH_INTERVAL) {
           return;
         }
         
-        // Debounce: 2 saniye bekle, eğer tekrar görünür olursa iptal et
         if (visibilityTimeout) clearTimeout(visibilityTimeout);
         visibilityTimeout = setTimeout(() => {
           fetchAllData();
@@ -2512,7 +2458,6 @@ function App() {
 
     let customerRow = null;
     try {
-      // Önce müşteriyi bul
       const { data: existingCustomer, error: selectError } = await supabase
         .from('customers')
         .select('id, name')
@@ -2525,10 +2470,8 @@ function App() {
       }
       
       if (existingCustomer) {
-        // Müşteri zaten var
         customerRow = existingCustomer;
       } else {
-        // Müşteri yok, oluştur
         const { data: newCustomer, error: insertError } = await supabase
           .from('customers')
           .insert({ name: customerName })
@@ -2621,7 +2564,6 @@ function App() {
           }
         }
         if (formData.id) {
-          // Eski transaction bilgisini al (müşteri değişikliğini kontrol etmek için)
           const { data: oldTransaction } = await supabase
             .from('transactions')
             .select('customer_id, is_paid, has, price, date')
@@ -2660,13 +2602,11 @@ function App() {
             return;
           }
 
-          // Eğer ödeme alındıysa ve müşteri değiştiyse, ödeme kaydını da güncelle
           if (isPaid && isCustomerChanged && oldCustomerId) {
             const hasAmount = parseFloat(formData.has || 0);
             const cashAmount = parseFloat(formData.price || 0);
             const paymentDate = formData.date;
 
-            // Eski müşteriye ait, otomatik oluşturulan ödeme kaydını bul
             const { data: oldPayments, error: findError } = await supabase
               .from('payments')
               .select('id')
@@ -2678,7 +2618,6 @@ function App() {
               .limit(1);
 
             if (!findError && oldPayments && oldPayments.length > 0) {
-              // Ödeme kaydını yeni müşteriye taşı
               const { error: paymentUpdateError } = await supabase
                 .from('payments')
                 .update({
@@ -2695,7 +2634,6 @@ function App() {
                 showToast('İşlem güncellendi ancak ödeme kaydı güncellenemedi.', 'warning');
               }
             } else if (isPaid && !oldIsPaid) {
-              // Ödeme durumu false -> true oldu, yeni ödeme kaydı oluştur
               const { error: payError } = await supabase.from('payments').insert({
                 customer_id: customerId,
                 has_amount: hasAmount,
@@ -2710,7 +2648,6 @@ function App() {
               }
             }
           } else if (isPaid && !oldIsPaid) {
-            // Ödeme durumu false -> true oldu, yeni ödeme kaydı oluştur
             const { error: payError } = await supabase.from('payments').insert({
               customer_id: customerId,
               has_amount: parseFloat(formData.has || 0),
@@ -2724,12 +2661,10 @@ function App() {
               showToast('İşlem güncellendi ancak ödeme kaydı oluşturulamadı.', 'warning');
             }
           } else if (!isPaid && oldIsPaid) {
-            // Ödeme durumu true -> false oldu, otomatik oluşturulan ödeme kaydını sil
             const hasAmount = parseFloat(formData.has || oldTransaction?.has || 0);
             const cashAmount = parseFloat(formData.price || oldTransaction?.price || 0);
             const paymentDate = formData.date || oldTransaction?.date;
 
-            // Otomatik oluşturulan ödeme kaydını bul ve sil
             const { data: autoPayments, error: findError } = await supabase
               .from('payments')
               .select('id')
@@ -2902,7 +2837,6 @@ function App() {
         onImportDefaultPrices={async () => {
           const parsePrice = (priceStr) => {
             if (!priceStr) return null;
-            // "150 - 250" gibi aralıklar için ilk değeri al
             const match = priceStr.match(/^(\d+)/);
             return match ? parseFloat(match[1]) : null;
           };
@@ -2940,7 +2874,6 @@ function App() {
         customers={customerOptions}
       />
 
-      {/* Toast Container */}
       <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-3">
         {toasts.map(toast => (
           <Toast
