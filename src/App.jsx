@@ -5,7 +5,8 @@ import {
 } from 'recharts';
 import {
   LayoutDashboard, Users, LogOut, TrendingUp, Wallet, CheckCircle,
-  Search, X, ChevronLeft, ChevronRight, Calendar, User, ArrowUpDown, Printer, Edit, FileDown, Share2, AlertCircle, Info
+  Search, X, ChevronLeft, ChevronRight, Calendar, User, ArrowUpDown, Printer, Edit, FileDown, Share2, AlertCircle, Info,
+  Inbox, BarChart3, FileText, Plus
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { supabase } from './supabaseClient.js';
@@ -34,38 +35,82 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('tr-TR');
 };
 
-const LABEL_BASE = "block text-[13px] font-medium text-slate-600 mb-1.5 tracking-wide";
-const INPUT_BASE = "w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-[14px] text-slate-800 placeholder:text-slate-400 outline-none transition-colors hover:border-slate-300 focus:border-slate-900 focus:ring-1 focus:ring-slate-900/10";
+const LABEL_BASE = "block text-[13px] font-medium text-slate-300 mb-1.5 tracking-wide";
+const INPUT_BASE = "w-full px-4 py-3 rounded-xl border border-slate-600 bg-slate-800 text-[14px] text-slate-100 placeholder:text-slate-500 outline-none transition-colors hover:border-slate-500 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20";
 const SELECT_BASE = `${INPUT_BASE} pr-10`;
-const BTN_BASE = "inline-flex items-center justify-center gap-2 rounded-xl font-semibold min-h-[44px] transition-colors focus:outline-none focus:ring-1 focus:ring-slate-900/10 focus:ring-offset-2";
-const BTN_PRIMARY = `${BTN_BASE} bg-slate-900 text-white hover:bg-slate-800`;
-const BTN_ACCENT = `${BTN_BASE} bg-amber-500 text-slate-900 hover:bg-amber-600`;
-const BTN_SECONDARY = `${BTN_BASE} bg-white text-slate-700 border border-slate-200 hover:bg-slate-50`;
-const BTN_TONAL = `${BTN_BASE} bg-slate-100 text-slate-700 hover:bg-slate-200`;
-const BTN_ICON = "p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-900/10";
+const BTN_BASE = "inline-flex items-center justify-center gap-2 rounded-xl font-semibold min-h-[44px] transition-colors focus:outline-none focus:ring-1 focus:ring-amber-500/20 focus:ring-offset-2 focus:ring-offset-slate-900";
+const BTN_PRIMARY = `${BTN_BASE} bg-amber-500 text-slate-900 hover:bg-amber-400`;
+const BTN_ACCENT = `${BTN_BASE} bg-emerald-500 text-white hover:bg-emerald-400`;
+const BTN_SECONDARY = `${BTN_BASE} bg-slate-700 text-slate-200 border border-slate-600 hover:bg-slate-600`;
+const BTN_TONAL = `${BTN_BASE} bg-slate-700 text-slate-200 hover:bg-slate-600 px-4 py-2`;
+const BTN_ICON = "p-2 rounded-lg text-slate-400 hover:bg-slate-700 hover:text-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500/20";
 const TAB_BASE = "flex-1 text-sm font-semibold rounded-lg px-3 py-2 transition-colors";
 
 
 
+const Skeleton = ({ className = "" }) => (
+  <div className={`skeleton ${className}`}></div>
+);
+
+const SkeletonCard = () => (
+  <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+    <div className="flex items-start justify-between">
+      <div className="flex-1">
+        <Skeleton className="h-4 w-24 mb-2" />
+        <Skeleton className="h-8 w-32 mb-1" />
+        <Skeleton className="h-3 w-20" />
+      </div>
+      <Skeleton className="h-12 w-12 rounded-xl" />
+    </div>
+  </div>
+);
+
+const SkeletonTable = ({ rows = 5 }) => (
+  <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
+    <div className="p-6 border-b border-slate-700">
+      <Skeleton className="h-6 w-48" />
+    </div>
+    <div className="p-4 space-y-3">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="flex gap-4">
+          <Skeleton className="h-10 flex-1" />
+          <Skeleton className="h-10 w-24" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const EmptyState = ({ icon: Icon, title, description }) => (
+  <div className="flex flex-col items-center justify-center py-12 px-4">
+    <div className="empty-state-icon mb-4 p-4 bg-slate-700/50 rounded-full">
+      <Icon className="w-12 h-12 text-slate-400" />
+    </div>
+    <h3 className="text-lg font-semibold text-slate-300 mb-1">{title}</h3>
+    {description && <p className="text-sm text-slate-500 text-center max-w-xs">{description}</p>}
+  </div>
+);
+
 const Toast = ({ message, type, onClose }) => {
   const icons = {
-    success: <CheckCircle className="w-5 h-5 text-emerald-600" />,
-    error: <AlertCircle className="w-5 h-5 text-rose-600" />,
-    warning: <AlertCircle className="w-5 h-5 text-amber-600" />,
-    info: <Info className="w-5 h-5 text-slate-700" />
+    success: <CheckCircle className="w-5 h-5 text-emerald-400" />,
+    error: <AlertCircle className="w-5 h-5 text-rose-400" />,
+    warning: <AlertCircle className="w-5 h-5 text-amber-400" />,
+    info: <Info className="w-5 h-5 text-slate-300" />
   };
 
   const bgColors = {
-    success: 'bg-emerald-50 border-emerald-200',
-    error: 'bg-rose-50 border-rose-200',
-    warning: 'bg-amber-50 border-amber-200',
-    info: 'bg-slate-50 border-slate-200'
+    success: 'bg-emerald-900/90 border-emerald-700',
+    error: 'bg-rose-900/90 border-rose-700',
+    warning: 'bg-amber-900/90 border-amber-700',
+    info: 'bg-slate-800 border-slate-600'
   };
 
   return (
-    <div className={`flex items-center gap-3 p-4 rounded-2xl border shadow-sm animate-in slide-in-from-right-full duration-500 max-w-sm ${bgColors[type]}`}>
+    <div className={`toast-animated flex items-center gap-3 p-4 rounded-2xl border shadow-xl backdrop-blur-sm max-w-sm ${bgColors[type]}`}>
       {icons[type]}
-      <p className="text-sm font-semibold text-slate-800 flex-1">{message}</p>
+      <p className="text-sm font-semibold text-slate-100 flex-1">{message}</p>
       <button onClick={onClose} className={BTN_ICON} aria-label="Bildirimi kapat">
         <X className="w-4 h-4" />
       </button>
@@ -83,14 +128,14 @@ const LoginPage = ({ onLogin, showToast, isLoading }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-2xl shadow-sm w-full max-w-md border border-slate-200">
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+      <div className="bg-slate-800 p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-700">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-14 h-14 bg-slate-900 rounded-full flex items-center justify-center mb-4">
-            <Users className="w-7 h-7 text-white" />
+          <div className="w-14 h-14 bg-amber-500 rounded-full flex items-center justify-center mb-4">
+            <Users className="w-7 h-7 text-slate-900" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">{APP_NAME}</h1>
-          <p className="text-slate-500 text-sm mt-1">Yönetim Paneli Girişi</p>
+          <h1 className="text-2xl font-bold text-slate-100 tracking-tight">{APP_NAME}</h1>
+          <p className="text-slate-400 text-sm mt-1">Yönetim Paneli Girişi</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -135,7 +180,7 @@ const LoginPage = ({ onLogin, showToast, isLoading }) => {
 
 const StatCard = ({ title, value, subtext, icon: Icon, iconClass, onClick }) => (
   <div
-    className={`bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow transition-shadow ${onClick ? 'cursor-pointer' : ''}`}
+    className={`card-hover bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 hover:border-slate-600 ${onClick ? 'cursor-pointer' : ''}`}
     onClick={onClick}
     role={onClick ? 'button' : undefined}
     tabIndex={onClick ? 0 : undefined}
@@ -143,11 +188,11 @@ const StatCard = ({ title, value, subtext, icon: Icon, iconClass, onClick }) => 
   >
     <div className="flex items-start justify-between">
       <div>
-        <p className="text-[13px] font-semibold text-slate-500 mb-1 tracking-wide">{title}</p>
-        <h3 className="text-[26px] leading-tight font-bold text-slate-900">{value}</h3>
-        {subtext && <p className="text-[11px] text-slate-400 mt-1">{subtext}</p>}
+        <p className="text-[13px] font-semibold text-slate-400 mb-1 tracking-wide">{title}</p>
+        <h3 className="text-[26px] leading-tight font-bold text-slate-100">{value}</h3>
+        {subtext && <p className="text-[11px] text-slate-500 mt-1">{subtext}</p>}
       </div>
-      <div className={`p-3 rounded-xl ${iconClass}`}>
+      <div className={`p-3 rounded-xl transition-transform group-hover:scale-110 ${iconClass}`}>
         <Icon className="w-6 h-6" />
       </div>
     </div>
@@ -434,14 +479,14 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
   }, [jobData.milyem]);
 
   const Tabs = () => (
-    <div className="flex bg-slate-100 p-1 rounded-2xl mb-6 border border-slate-200">
+    <div className="flex bg-slate-900 p-1 rounded-2xl mb-6 border border-slate-700">
       <button
         type="button"
         disabled={!!initialData}
         onClick={() => setActiveTab('job')}
         className={`${TAB_BASE} ${activeTab === 'job'
-          ? 'bg-white text-slate-900 border border-slate-200 shadow-sm'
-          : 'text-slate-500 hover:text-slate-700'
+          ? 'bg-slate-700 text-amber-400 border border-slate-600 shadow-sm'
+          : 'text-slate-400 hover:text-slate-200'
           } ${initialData ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         İşlem Gir
@@ -451,8 +496,8 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
         disabled={!!initialData}
         onClick={() => setActiveTab('payment')}
         className={`${TAB_BASE} ${activeTab === 'payment'
-          ? 'bg-white text-slate-900 border border-slate-200 shadow-sm'
-          : 'text-slate-500 hover:text-slate-700'
+          ? 'bg-slate-700 text-amber-400 border border-slate-600 shadow-sm'
+          : 'text-slate-400 hover:text-slate-200'
           } ${initialData ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         Ödeme Al
@@ -462,8 +507,8 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
         disabled={!!initialData}
         onClick={() => setActiveTab('expense')}
         className={`${TAB_BASE} ${activeTab === 'expense'
-          ? 'bg-white text-slate-900 border border-slate-200 shadow-sm'
-          : 'text-slate-500 hover:text-slate-700'
+          ? 'bg-slate-700 text-amber-400 border border-slate-600 shadow-sm'
+          : 'text-slate-400 hover:text-slate-200'
           } ${initialData ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         Gider Ekle
@@ -472,17 +517,17 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <nav className="bg-blue-900 text-white shadow-lg sticky top-0 z-40">
+    <div className="min-h-screen bg-slate-900 flex flex-col">
+      <nav className="bg-slate-800 text-white shadow-lg sticky top-0 z-40 border-b border-slate-700">
         <div className="max-w-md mx-auto px-4 w-full">
           <div className="flex items-center h-16 relative justify-center">
             <button
               onClick={onBack}
-              className="absolute left-0 p-2 hover:bg-white/10 rounded-lg transition-colors flex items-center gap-2 text-sm"
+              className="absolute left-0 p-2 hover:bg-slate-700 rounded-lg transition-colors flex items-center gap-2 text-sm text-slate-300"
             >
               <ChevronLeft className="w-5 h-5" /> Geri
             </button>
-            <span className="font-bold text-lg">
+            <span className="font-bold text-lg text-amber-400">
               {initialData ? 'İşlemi Düzenle' : (activeTab === 'job' ? 'Yeni İşlem' : activeTab === 'expense' ? 'Yeni Gider' : 'Tahsilat')}
             </span>
           </div>
@@ -490,7 +535,7 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
       </nav>
 
       <div className="flex-1 p-4 max-w-md mx-auto w-full">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-7">
+        <div className="bg-slate-800 rounded-2xl shadow-xl border border-slate-700 p-7">
           <Tabs />
 
           {activeTab === 'job' && (
@@ -511,7 +556,7 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
                   ))}
                 </datalist>
                 {jobData.customer && customerMatches.length === 0 && (
-                  <p className="mt-2 text-xs text-slate-500">
+                  <p className="mt-2 text-xs text-emerald-400">
                     + Yeni ekle: <span className="font-medium">{jobData.customer}</span>
                   </p>
                 )}
@@ -556,7 +601,7 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
                     ))}
                   </datalist>
                   {jobData.milyem && milyemMatches.length === 0 && (
-                    <p className="mt-2 text-xs text-slate-500">
+                    <p className="mt-2 text-xs text-emerald-400">
                       + Yeni ekle: <span className="font-medium">{jobData.milyem}</span>
                     </p>
                   )}
@@ -579,7 +624,7 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
                   ))}
                 </datalist>
                 {jobData.jobType && jobTypeMatches.length === 0 && (
-                  <p className="mt-2 text-xs text-slate-500">
+                  <p className="mt-2 text-xs text-emerald-400">
                     + Yeni ekle: <span className="font-medium">{jobData.jobType}</span>
                   </p>
                 )}
@@ -595,7 +640,7 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
                   onChange={e => setJobData({ ...jobData, price: e.target.value })}
                 />
                 {jobData.jobType && (
-                  <p className="text-[10px] text-amber-600 mt-1 truncate">
+                  <p className="text-[10px] text-amber-400 mt-1 truncate">
                     Ref: {workTypes.find(t => t.name === jobData.jobType)?.default_price ?? '-'}
                   </p>
                 )}
@@ -613,7 +658,7 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
                     onChange={e => setJobData({ ...jobData, goldWeight: e.target.value })}
                   />
                   {calculatedJobHas && (
-                    <p className="text-[10px] text-green-600 mt-1 font-bold bg-green-50 px-1 py-0.5 rounded inline-block">
+                    <p className="text-[10px] text-emerald-400 mt-1 font-bold bg-emerald-900/50 px-1 py-0.5 rounded inline-block">
                       {isSilverMilyem(jobData.milyem) ? 'Gümüş' : 'Has'}: {calculatedJobHas}
                     </p>
                   )}
@@ -630,11 +675,11 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200 cursor-pointer" onClick={() => setJobData(p => ({ ...p, isPaid: !p.isPaid }))}>
-                <div className={`w-6 h-6 rounded-md border flex items-center justify-center transition-colors ${jobData.isPaid ? 'bg-green-500 border-green-500' : 'bg-white border-slate-300'}`}>
+              <div className="flex items-center gap-3 p-3 bg-slate-900 rounded-lg border border-slate-600 cursor-pointer hover:border-slate-500 transition-colors" onClick={() => setJobData(p => ({ ...p, isPaid: !p.isPaid }))}>
+                <div className={`w-6 h-6 rounded-md border flex items-center justify-center transition-colors ${jobData.isPaid ? 'bg-emerald-500 border-emerald-500' : 'bg-slate-700 border-slate-500'}`}>
                   {jobData.isPaid && <CheckCircle className="w-4 h-4 text-white" />}
                 </div>
-                <span className={`text-sm font-medium select-none ${jobData.isPaid ? 'text-green-700' : 'text-slate-600'}`}>
+                <span className={`text-sm font-medium select-none ${jobData.isPaid ? 'text-emerald-400' : 'text-slate-300'}`}>
                   Ödeme Peşin Alındı
                 </span>
               </div>
@@ -705,7 +750,7 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
                   value={paymentData.hasAmount}
                   onChange={e => setPaymentData({ ...paymentData, hasAmount: e.target.value })}
                 />
-                <p className="text-xs text-slate-500 mt-1">Varsa hurda/has ödemesi</p>
+                <p className="text-xs text-slate-400 mt-1">Varsa hurda/has ödemesi</p>
               </div>
 
               <div>
@@ -718,7 +763,7 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
                   value={paymentData.silverAmount}
                   onChange={e => setPaymentData({ ...paymentData, silverAmount: e.target.value })}
                 />
-                <p className="text-xs text-slate-500 mt-1">Gümüş ödemesi varsa</p>
+                <p className="text-xs text-slate-400 mt-1">Gümüş ödemesi varsa</p>
               </div>
 
               <button
@@ -981,12 +1026,13 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
       return {
         name: d.toLocaleDateString('tr-TR', { month: 'short' }),
         income: 0,
+        expense: 0,
         fullDate: monthKey
       };
     });
 
     Object.values(filteredData).flat().forEach(t => {
-      if (t.type === 'payment' || t.isPaid) { // Count income from payments or paid jobs
+      if (t.type === 'payment' || t.isPaid) {
         const tDate = t.date || t.tarih;
         const tMonth = tDate.slice(0, 7);
         const monthStats = monthlyTrend.find(m => m.fullDate === tMonth);
@@ -997,8 +1043,18 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
       }
     });
 
+    if (expenses && expenses.length > 0) {
+      expenses.forEach(exp => {
+        const expMonth = exp.date.slice(0, 7);
+        const monthStats = monthlyTrend.find(m => m.fullDate === expMonth);
+        if (monthStats) {
+          monthStats.expense += parseFloat(exp.amount) || 0;
+        }
+      });
+    }
+
     return { topCustomers, monthlyTrend };
-  }, [stats, filteredData]);
+  }, [stats, filteredData, expenses]);
 
 
   const sortedCustomers = useMemo(() => {
@@ -1022,15 +1078,15 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-12">
-      <nav className="bg-blue-900 text-white shadow-lg sticky top-0 z-40">
+    <div className="min-h-screen bg-slate-900 pb-12">
+      <nav className="bg-slate-800 text-white shadow-lg sticky top-0 z-40 border-b border-slate-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="bg-white/10 p-2 rounded-lg text-white">
+              <div className="bg-amber-500 p-2 rounded-lg text-slate-900">
                 <LayoutDashboard className="w-5 h-5" />
               </div>
-              <span className="font-semibold text-xl tracking-tight">{APP_NAME}</span>
+              <span className="font-semibold text-xl tracking-tight text-amber-400">{APP_NAME}</span>
             </div>
 
           <div className="flex items-center gap-4">
@@ -1050,16 +1106,16 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
               </button>
 
               {goldPrice && (
-                <div className="hidden md:flex items-center gap-2 bg-white/10 px-3 py-2 rounded-lg border border-white/10">
-                  <TrendingUp className="w-4 h-4 text-blue-100" />
+                <div className="hidden md:flex items-center gap-2 bg-amber-500/20 px-3 py-2 rounded-lg border border-amber-500/30">
+                  <TrendingUp className="w-4 h-4 text-amber-400" />
                   <div className="flex flex-col">
-                    <span className="text-xs text-blue-100">Altın (Gram)</span>
-                    <span className="text-sm font-semibold text-white">{goldPrice} ₺</span>
+                    <span className="text-xs text-amber-300">Altın (Gram)</span>
+                    <span className="text-sm font-semibold text-amber-400">{goldPrice} ₺</span>
                   </div>
                 </div>
               )}
 
-              <div className="flex items-center gap-2 text-blue-100 hover:text-white transition-colors">
+              <div className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">
                 <User className="w-4 h-4" />
                 <span className="text-sm font-medium">{user}</span>
               </div>
@@ -1077,26 +1133,26 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
       <button
         type="button"
         onClick={() => onNavigate('add-transaction')}
-        className="fixed bottom-6 right-6 sm:hidden bg-amber-500 text-blue-900 w-14 h-14 rounded-full shadow-lg flex items-center justify-center z-50 transition-colors hover:bg-amber-600"
+        className="fab-animated fixed bottom-6 right-6 sm:hidden bg-amber-500 text-slate-900 w-16 h-16 rounded-full shadow-xl flex items-center justify-center z-50"
         aria-label="Yeni işlem ekle"
       >
-        <CheckCircle className="w-8 h-8" />
+        <Plus className="w-8 h-8" strokeWidth={2.5} />
       </button>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="w-full sm:w-auto">
-            <h1 className="text-2xl font-bold text-slate-800">Genel Bakış</h1>
-            <p className="text-slate-500 text-sm">Finansal durum ve işlem özetleri</p>
+            <h1 className="text-2xl font-bold text-slate-100">Genel Bakış</h1>
+            <p className="text-slate-400 text-sm">Finansal durum ve işlem özetleri</p>
           </div>
 
           <div className="w-full sm:w-auto">
-            <div className="flex flex-col sm:flex-row items-stretch gap-2 bg-white border border-slate-200 rounded-2xl shadow-sm p-2.5">
+            <div className="flex flex-col sm:flex-row items-stretch gap-2 bg-slate-800 border border-slate-700 rounded-2xl shadow-lg p-2.5">
               <div className="flex items-center gap-2 px-2 py-1.5">
                 <Users className="w-4 h-4 text-slate-400" />
                 <select
-                  className="bg-transparent text-[13px] font-medium text-slate-700 focus:outline-none cursor-pointer py-2 pr-8 w-full sm:w-44"
+                  className="bg-transparent text-[13px] font-medium text-slate-200 focus:outline-none cursor-pointer py-2 pr-8 w-full sm:w-44"
                   value={customerFilter}
                   onChange={(e) => setCustomerFilter(e.target.value)}
                 >
@@ -1107,14 +1163,14 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
                 </select>
               </div>
 
-              <div className="hidden sm:block w-px bg-slate-100 my-1"></div>
+              <div className="hidden sm:block w-px bg-slate-600 my-1"></div>
 
               <div className="flex items-center gap-2 px-2 py-1.5">
                 <Calendar className="w-4 h-4 text-slate-400" />
                 <div className="flex items-center gap-2">
                   <input
                     type="date"
-                    className="text-[13px] font-medium text-slate-700 focus:outline-none cursor-pointer"
+                    className="text-[13px] font-medium text-slate-200 bg-transparent focus:outline-none cursor-pointer"
                     value={dateRange.start}
                     max={dateRange.end}
                     onChange={(e) => {
@@ -1125,10 +1181,10 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
                       }));
                     }}
                   />
-                  <span className="text-slate-300">-</span>
+                  <span className="text-slate-500">-</span>
                   <input
                     type="date"
-                    className="text-[13px] font-medium text-slate-700 focus:outline-none cursor-pointer"
+                    className="text-[13px] font-medium text-slate-200 bg-transparent focus:outline-none cursor-pointer"
                     value={dateRange.end}
                     min={dateRange.start}
                     onChange={(e) => {
@@ -1142,7 +1198,7 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
                 </div>
               </div>
 
-              <div className="hidden sm:block w-px bg-slate-100 my-1"></div>
+              <div className="hidden sm:block w-px bg-slate-600 my-1"></div>
 
               <button
                 onClick={() => {
@@ -1262,16 +1318,16 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
         </div>
 
         {goldPrice && (
-          <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg">
             <div className="flex items-center gap-4">
-              <div className="bg-slate-900 p-3 rounded-xl text-white shadow-sm">
+              <div className="bg-amber-500 p-3 rounded-xl text-slate-900 shadow-sm">
                 <TrendingUp className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-slate-800 leading-tight">Canlı Altın Kuru</h3>
-                <p className="text-slate-500 text-xs font-medium">Altınkaynak verileriyle 10 saniyede bir güncellenir</p>
+                <h3 className="font-semibold text-slate-100 leading-tight">Canlı Altın Kuru</h3>
+                <p className="text-slate-400 text-xs font-medium">Altınkaynak verileriyle 10 saniyede bir güncellenir</p>
                 {goldUpdatedAt && (
-                  <p className="text-[11px] text-slate-400 mt-1">
+                  <p className="text-[11px] text-slate-500 mt-1">
                     Son güncelleme: {goldUpdatedAt.toLocaleString('tr-TR')}
                   </p>
                 )}
@@ -1280,17 +1336,17 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
 
             <div className="flex items-center gap-6">
               <div className="text-center sm:text-right">
-                <span className="text-xs text-slate-500 block uppercase tracking-wider font-semibold mb-0.5">Gram Altın</span>
-                <span className="text-3xl font-bold text-slate-800 font-mono tracking-tighter">
+                <span className="text-xs text-amber-400 block uppercase tracking-wider font-semibold mb-0.5">Gram Altın</span>
+                <span className="text-3xl font-bold text-amber-400 font-mono tracking-tighter">
                   {goldPrice} <span className="text-xl">₺</span>
                 </span>
               </div>
-              <div className="hidden sm:block w-px h-10 bg-slate-200"></div>
+              <div className="hidden sm:block w-px h-10 bg-slate-600"></div>
               <a
                 href="https://www.altinkaynak.com/Altin/Kur/Guncel"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-white hover:bg-slate-100 text-slate-700 font-semibold px-4 py-2 rounded-lg border border-slate-200 transition-colors text-sm"
+                className="bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold px-4 py-2 rounded-lg border border-slate-600 transition-colors text-sm"
               >
                 Detaylar
               </a>
@@ -1302,80 +1358,91 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
           <StatCard
             title="Toplam Tahsilat"
             value={formatCurrency(stats.totalIncome)}
-            iconClass="bg-emerald-50 text-emerald-600"
+            iconClass="bg-emerald-900/50 text-emerald-400"
             icon={Wallet}
           />
           <StatCard
             title="Toplam Gider"
             value={formatCurrency(totalExpense)}
-            iconClass="bg-rose-50 text-rose-600"
+            iconClass="bg-rose-900/50 text-rose-400"
             icon={ArrowUpDown}
             onClick={() => setShowExpenseModal(true)}
           />
           <StatCard
             title="Nakit Alacak"
             value={formatCurrency(stats.totalReceivables)}
-            iconClass="bg-amber-50 text-amber-600"
+            iconClass="bg-amber-900/50 text-amber-400"
             icon={ArrowUpDown}
           />
           <StatCard
             title="Has Alacak (Gr)"
             value={`${formatNumber(stats.totalHasReceivables)}`}
-            iconClass="bg-indigo-50 text-indigo-600"
+            iconClass="bg-indigo-900/50 text-indigo-400"
             icon={TrendingUp}
           />
           <StatCard
             title="Gümüş Bakiye (Gr)"
             value={`${formatNumber(stats.totalSilverReceivables)}`}
-            iconClass="bg-slate-50 text-slate-600"
+            iconClass="bg-slate-700 text-slate-300"
             icon={TrendingUp}
           />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-            <h3 className="text-lg font-bold text-slate-800 mb-6">En Çok Kazandıran Müşteriler</h3>
+          <div className="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
+            <h3 className="text-lg font-bold text-slate-100 mb-6">En Çok Kazandıran Müşteriler</h3>
             <div style={{ width: '100%', height: 288 }}>
               {chartData?.topCustomers?.length > 0 ? (
                 <ResponsiveContainer width="100%" height={288}>
                   <BarChart data={chartData.topCustomers} layout="vertical" margin={{ left: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#475569" />
                     <XAxis type="number" hide />
-                    <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12, fill: '#64748b' }} />
+                    <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12, fill: '#94a3b8' }} />
                     <Tooltip
-                      formatter={(value) => formatCurrency(value)}
-                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                      formatter={(value) => [formatCurrency(value), 'Gelir']}
+                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.3)', backgroundColor: '#1e293b', color: '#f1f5f9' }}
+                      labelStyle={{ color: '#f1f5f9' }}
                     />
-                    <Bar dataKey="income" fill="#0f172a" radius={[0, 4, 4, 0]} barSize={20} />
+                    <Legend formatter={() => 'Gelir'} wrapperStyle={{ color: '#94a3b8' }} />
+                    <Bar dataKey="income" name="Gelir" fill="#f59e0b" radius={[0, 4, 4, 0]} barSize={20} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full flex items-center justify-center text-slate-400 text-sm">
-                  Henüz veri yok
+                <div className="h-full flex flex-col items-center justify-center">
+                  <div className="empty-state-icon mb-3 p-3 bg-slate-700/50 rounded-full">
+                    <BarChart3 className="w-8 h-8 text-slate-500" />
+                  </div>
+                  <p className="text-slate-500 text-sm">Henüz veri yok</p>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-            <h3 className="text-lg font-bold text-slate-800 mb-6">Aylık Tahsilat Trendi</h3>
+          <div className="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
+            <h3 className="text-lg font-bold text-slate-100 mb-6">Aylık Gelir / Gider Trendi</h3>
             <div style={{ width: '100%', height: 288 }}>
               {chartData?.monthlyTrend?.length > 0 ? (
                 <ResponsiveContainer width="100%" height={288}>
                   <LineChart data={chartData.monthlyTrend}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#64748b' }} />
-                    <YAxis tickFormatter={(val) => `₺${val / 1000}k`} tick={{ fontSize: 12, fill: '#64748b' }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#475569" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                    <YAxis tickFormatter={(val) => `₺${val / 1000}k`} tick={{ fontSize: 12, fill: '#94a3b8' }} />
                     <Tooltip
-                      formatter={(value) => formatCurrency(value)}
-                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                      formatter={(value, name) => [formatCurrency(value), name === 'income' ? 'Gelir' : 'Gider']}
+                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.3)', backgroundColor: '#1e293b', color: '#f1f5f9' }}
+                      labelStyle={{ color: '#f1f5f9' }}
                     />
-                    <Line type="monotone" dataKey="income" stroke="#475569" strokeWidth={3} dot={{ r: 4, fill: '#475569' }} activeDot={{ r: 6 }} />
+                    <Legend wrapperStyle={{ color: '#94a3b8' }} />
+                    <Line type="monotone" dataKey="income" name="Gelir" stroke="#22c55e" strokeWidth={3} dot={{ r: 4, fill: '#22c55e' }} activeDot={{ r: 6, fill: '#4ade80' }} />
+                    <Line type="monotone" dataKey="expense" name="Gider" stroke="#ef4444" strokeWidth={3} dot={{ r: 4, fill: '#ef4444' }} activeDot={{ r: 6, fill: '#f87171' }} />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full flex items-center justify-center text-slate-400 text-sm">
-                  Henüz veri yok
+                <div className="h-full flex flex-col items-center justify-center">
+                  <div className="empty-state-icon mb-3 p-3 bg-slate-700/50 rounded-full">
+                    <TrendingUp className="w-8 h-8 text-slate-500" />
+                  </div>
+                  <p className="text-slate-500 text-sm">Henüz veri yok</p>
                 </div>
               )}
             </div>
@@ -1383,13 +1450,13 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
         </div>
 
         {!customerFilter ? (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="p-6 border-b border-slate-200">
-              <h3 className="text-lg font-bold text-slate-800">Müşteri Bazlı Özet (Bakiye)</h3>
+          <div className="bg-slate-800 rounded-2xl shadow-lg border border-slate-700 overflow-hidden">
+            <div className="p-6 border-b border-slate-700">
+              <h3 className="text-lg font-bold text-slate-100">Müşteri Bazlı Özet (Bakiye)</h3>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
-                <thead className="bg-slate-50/60">
+                <thead className="bg-slate-900/60 sticky top-0 z-10">
                   <tr>
                     {[
                       { id: 'name', label: 'Müşteri Adı' },
@@ -1404,24 +1471,24 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
                       <th
                         key={col.id}
                         onClick={() => requestSort(col.id)}
-                        className="px-6 py-4 text-[11px] font-semibold text-slate-500 uppercase tracking-widest cursor-pointer hover:bg-slate-100/60 transition-colors select-none"
+                        className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-700/60 transition-colors select-none"
                       >
                         <div className="flex items-center gap-1">
                           {col.label}
                           {sortConfig.key === col.id && (
-                            <ArrowUpDown className="w-3 h-3 text-amber-500" />
+                            <ArrowUpDown className="w-3 h-3 text-amber-400" />
                           )}
                         </div>
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-700">
                   {sortedCustomers.map((customer) => (
                     <tr
                       key={customer.name}
                       onClick={() => setSelectedCustomer(customer.name)}
-                      className="group cursor-pointer transition-colors hover:bg-slate-50/60 hover:opacity-95 hover:shadow-[0_1px_0_0_rgba(15,23,42,0.05)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-300/70"
+                      className="group cursor-pointer transition-colors hover:bg-slate-700/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-amber-500/30"
                       tabIndex={0}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
@@ -1430,18 +1497,18 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
                         }
                       }}
                     >
-                      <td className="px-6 py-4 text-sm font-medium text-slate-800 group-hover:text-slate-900">{customer.name}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{customer.count}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600 font-mono">{formatNumber(customer.goldVolume)}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600 font-mono">{formatNumber(customer.silverVolume || 0)}</td>
-                      <td className={`px-6 py-4 text-sm font-bold font-mono ${customer.hasBalance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      <td className="px-6 py-4 text-sm font-medium text-slate-200 group-hover:text-white">{customer.name}</td>
+                      <td className="px-6 py-4 text-sm text-slate-400">{customer.count}</td>
+                      <td className="px-6 py-4 text-sm text-slate-400 font-mono">{formatNumber(customer.goldVolume)}</td>
+                      <td className="px-6 py-4 text-sm text-slate-400 font-mono">{formatNumber(customer.silverVolume || 0)}</td>
+                      <td className={`px-6 py-4 text-sm font-bold font-mono ${customer.hasBalance > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
                         {formatNumber(customer.hasBalance)}
                       </td>
-                      <td className={`px-6 py-4 text-sm font-bold font-mono ${customer.silverBalance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      <td className={`px-6 py-4 text-sm font-bold font-mono ${customer.silverBalance > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
                         {formatNumber(customer.silverBalance || 0)}
                       </td>
-                      <td className="px-6 py-4 text-sm font-bold text-green-600 font-mono">{formatCurrency(customer.income)}</td>
-                      <td className={`px-6 py-4 text-sm font-bold font-mono ${customer.cashBalance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      <td className="px-6 py-4 text-sm font-bold text-emerald-400 font-mono">{formatCurrency(customer.income)}</td>
+                      <td className={`px-6 py-4 text-sm font-bold font-mono ${customer.cashBalance > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
                         {formatCurrency(customer.cashBalance)}
                       </td>
                     </tr>
@@ -1462,8 +1529,8 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
         )}
 
         {!customerFilter && selectedCustomer && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setSelectedCustomer(null)}>
-            <div className="bg-white rounded-3xl shadow-xl border border-slate-200 w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+          <div className="modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setSelectedCustomer(null)}>
+            <div className="modal-content bg-slate-800 rounded-3xl shadow-2xl border border-slate-700 w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
               <div className="flex justify-end p-2 absolute top-3 right-3 z-10">
                 <button onClick={() => setSelectedCustomer(null)} className={BTN_ICON} aria-label="Kapat">
                   <X className="w-5 h-5" />
@@ -1481,12 +1548,12 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
           </div>
         )}
         {showExpenseModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setShowExpenseModal(false)}>
-            <div className="bg-white rounded-3xl shadow-xl border border-slate-200 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
-              <div className="flex items-center justify-between p-6 border-b border-slate-200">
+          <div className="modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setShowExpenseModal(false)}>
+            <div className="modal-content bg-slate-800 rounded-3xl shadow-2xl border border-slate-700 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between p-6 border-b border-slate-700">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-800">Gider Detayları</h3>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <h3 className="text-lg font-bold text-slate-100">Gider Detayları</h3>
+                  <p className="text-xs text-slate-400 mt-1">
                     Seçili tarih aralığı için filtreleyebilirsiniz
                   </p>
                 </div>
@@ -1494,7 +1561,7 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <div className="p-6 border-b border-slate-200 flex flex-col md:flex-row gap-4">
+              <div className="p-6 border-b border-slate-700 flex flex-col md:flex-row gap-4">
                 <div className="flex-1">
                   <label className={LABEL_BASE}>Tür</label>
                   <select
@@ -1521,27 +1588,27 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
               <div className="flex-1 overflow-auto">
                 {filteredExpenseRows.length > 0 ? (
                   <table className="w-full text-left border-collapse">
-                    <thead className="bg-slate-50/60 sticky top-0">
+                    <thead className="bg-slate-900/60 sticky top-0">
                       <tr>
-                        <th className="px-6 py-4 text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Tarih</th>
-                        <th className="px-6 py-4 text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Tür</th>
-                        <th className="px-6 py-4 text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Açıklama</th>
-                        <th className="px-6 py-4 text-[11px] font-semibold text-slate-500 uppercase tracking-widest text-right">Tutar</th>
+                        <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Tarih</th>
+                        <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Tür</th>
+                        <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Açıklama</th>
+                        <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-widest text-right">Tutar</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-700">
                       {filteredExpenseRows.map((exp) => (
-                        <tr key={exp.id}>
-                          <td className="px-6 py-4 text-sm text-slate-600">{new Date(exp.date).toLocaleDateString('tr-TR')}</td>
-                          <td className="px-6 py-4 text-sm text-slate-700 font-medium">{exp.type}</td>
-                          <td className="px-6 py-4 text-sm text-slate-500">{exp.description || '-'}</td>
-                          <td className="px-6 py-4 text-sm text-right font-semibold text-rose-600">{formatCurrency(exp.amount || 0)}</td>
+                        <tr key={exp.id} className="hover:bg-slate-700/50">
+                          <td className="px-6 py-4 text-sm text-slate-300">{new Date(exp.date).toLocaleDateString('tr-TR')}</td>
+                          <td className="px-6 py-4 text-sm text-slate-200 font-medium">{exp.type}</td>
+                          <td className="px-6 py-4 text-sm text-slate-400">{exp.description || '-'}</td>
+                          <td className="px-6 py-4 text-sm text-right font-semibold text-rose-400">{formatCurrency(exp.amount || 0)}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 ) : (
-                  <div className="px-6 py-10 text-sm text-slate-400">
+                  <div className="px-6 py-10 text-sm text-slate-500">
                     Filtreye uygun gider kaydı yok.
                   </div>
                 )}
@@ -1685,36 +1752,36 @@ const CustomerDetail = ({ customer, transactions, dateRange, onClose, isInline =
   const finalHasBalance = devirHas + (periodTotals.totalJobHas - periodTotals.totalPaidHas);
 
   return (
-    <div className={`flex flex-col h-full ${isInline ? 'bg-white rounded-2xl shadow-sm border border-slate-200' : ''}`}>
-      <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50/60">
+    <div className={`flex flex-col h-full ${isInline ? 'bg-slate-800 rounded-2xl shadow-lg border border-slate-700' : ''}`}>
+      <div className="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-900/60">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
             {customer}
-            <span className="text-sm font-normal text-slate-500 bg-white px-2 py-1 rounded-full border border-slate-200 shadow-sm">
+            <span className="text-sm font-normal text-slate-400 bg-slate-700 px-2 py-1 rounded-full border border-slate-600 shadow-sm">
               {periodTotals.jobCount} İşlem (Dönem)
             </span>
           </h2>
           <div className="flex flex-wrap gap-4 mt-3 text-sm">
             <div className="flex items-center gap-2">
-              <span className="text-slate-500">Son Has Bakiye:</span>
-              <span className={`font-bold font-mono ${finalHasBalance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+              <span className="text-slate-400">Son Has Bakiye:</span>
+              <span className={`font-bold font-mono ${finalHasBalance > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
                 {formatNumber(finalHasBalance)} gr
               </span>
             </div>
-            <div className="w-px h-4 bg-slate-300"></div>
+            <div className="w-px h-4 bg-slate-600"></div>
             <div className="flex items-center gap-2">
-              <span className="text-slate-500">Son Nakit Bakiye:</span>
-              <span className={`font-bold font-mono ${finalCashBalance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+              <span className="text-slate-400">Son Nakit Bakiye:</span>
+              <span className={`font-bold font-mono ${finalCashBalance > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
                 {formatCurrency(finalCashBalance)}
               </span>
             </div>
-            <div className="w-px h-4 bg-slate-300"></div>
+            <div className="w-px h-4 bg-slate-600"></div>
             <div className="flex items-center gap-2">
-              <span className="text-slate-500">Dönem İşlenen:</span>
-              <span className="font-medium">{formatNumber(periodTotals.totalGold)} gr</span>
+              <span className="text-slate-400">Dönem İşlenen:</span>
+              <span className="font-medium text-slate-200">{formatNumber(periodTotals.totalGold)} gr</span>
             </div>
           </div>
-          <div className="text-xs text-slate-400 mt-2">
+          <div className="text-xs text-slate-500 mt-2">
             Filtre: {new Date(dateRange.start).toLocaleDateString('tr-TR')} - {new Date(dateRange.end).toLocaleDateString('tr-TR')}
           </div>
         </div>
@@ -1734,14 +1801,14 @@ const CustomerDetail = ({ customer, transactions, dateRange, onClose, isInline =
         </div>
       </div>
 
-      <div ref={pdfRef} className="flex-1 overflow-auto bg-white p-4">
-        <div className="hidden printable-header mb-8 border-b-2 border-blue-900 pb-4">
+      <div ref={pdfRef} className="flex-1 overflow-auto bg-slate-800 p-4">
+        <div className="hidden printable-header mb-8 border-b-2 border-amber-500 pb-4">
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-3xl font-black text-blue-900">{APP_NAME}</h1>
-              <p className="text-slate-500 text-sm">Müşteri Hesap Ekstresi</p>
+              <h1 className="text-3xl font-black text-amber-400">{APP_NAME}</h1>
+              <p className="text-slate-400 text-sm">Müşteri Hesap Ekstresi</p>
             </div>
-            <div className="text-right text-xs text-slate-500">
+            <div className="text-right text-xs text-slate-400">
               <p>Tarih: {new Date().toLocaleDateString('tr-TR')}</p>
               <p>Dönem: {new Date(dateRange.start).toLocaleDateString('tr-TR')} - {new Date(dateRange.end).toLocaleDateString('tr-TR')}</p>
             </div>
@@ -1750,19 +1817,19 @@ const CustomerDetail = ({ customer, transactions, dateRange, onClose, isInline =
 
         <div className="flex-1 overflow-auto p-0">
           <table className="tx-table w-full text-left border-collapse">
-            <thead className="bg-slate-50/70 sticky top-0 z-10">
+            <thead className="bg-slate-900/70 sticky top-0 z-10">
               <tr>
-                <th className="px-6 py-4 text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b border-slate-200">Tarih</th>
-                <th className="px-6 py-4 text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b border-slate-200">İşlem / Tür</th>
-                <th className="px-6 py-4 text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b border-slate-200">Açıklama</th>
-                <th className="px-6 py-4 text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-right">Adet</th>
-                <th className="px-6 py-4 text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-right">Has (Gr)</th>
-                <th className="px-6 py-4 text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-right">Birim Fiyat</th>
-                <th className="px-6 py-4 text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-right">Toplam (TL)</th>
-                <th className="px-6 py-4 text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-center">İşlemler</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-widest border-b border-slate-700">Tarih</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-widest border-b border-slate-700">İşlem / Tür</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-widest border-b border-slate-700">Açıklama</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-widest border-b border-slate-700 text-right">Adet</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-widest border-b border-slate-700 text-right">Has (Gr)</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-widest border-b border-slate-700 text-right">Birim Fiyat</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-widest border-b border-slate-700 text-right">Toplam (TL)</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-widest border-b border-slate-700 text-center">İşlemler</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-700">
               {currentData.map((t) => {
                 const isPayment = t.type === 'payment';
                 const date = t.date || t.tarih;
@@ -1793,37 +1860,37 @@ const CustomerDetail = ({ customer, transactions, dateRange, onClose, isInline =
                 return (
                   <tr
                     key={t.id}
-                    className={`group transition-colors hover:opacity-95 hover:shadow-[0_1px_0_0_rgba(15,23,42,0.05)] ${isPayment ? 'bg-emerald-50/30 hover:bg-emerald-50/40' : 'hover:bg-slate-50/60'}`}
+                    className={`group transition-colors ${isPayment ? 'bg-emerald-900/20 hover:bg-emerald-900/30' : 'hover:bg-slate-700/50'}`}
                   >
-                    <td className="px-6 py-4 text-sm text-slate-600 font-medium whitespace-nowrap">{formatDate(date)}</td>
+                    <td className="px-6 py-4 text-sm text-slate-300 font-medium whitespace-nowrap">{formatDate(date)}</td>
                     <td className="px-6 py-4 text-sm">
-                      <span className={`tx-badge inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${isPayment ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}`}>
+                      <span className={`tx-badge inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${isPayment ? 'bg-emerald-900/50 text-emerald-400' : 'bg-slate-700 text-slate-300'}`}>
                         {label}
                       </span>
                       {t.isEdited && (
-                        <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-500 border border-slate-200" title={`Son düzenleme: ${formatDate(t.lastEditedAt)}`}>
+                        <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-700 text-slate-400 border border-slate-600" title={`Son düzenleme: ${formatDate(t.lastEditedAt)}`}>
                           Düzenlendi
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
+                    <td className="px-6 py-4 text-sm text-slate-300">
                       <div>{desc}</div>
                       {noteText ? (
-                        <div className="tx-note mt-1 text-[11px] text-slate-400">Not: {noteText}</div>
+                        <div className="tx-note mt-1 text-[11px] text-slate-500">Not: {noteText}</div>
                       ) : (
-                        <div className="tx-note tx-note--empty mt-1 text-[11px] text-slate-300">Not yok</div>
+                        <div className="tx-note tx-note--empty mt-1 text-[11px] text-slate-500">Not yok</div>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-sm font-mono text-right text-slate-600">
+                    <td className="px-6 py-4 text-sm font-mono text-right text-slate-400">
                       {!isPayment ? quantity : '-'}
                     </td>
-                    <td className={`px-6 py-4 text-sm font-mono text-right ${isPayment ? 'text-green-600 font-bold' : 'text-slate-600'}`}>
+                    <td className={`px-6 py-4 text-sm font-mono text-right ${isPayment ? 'text-emerald-400 font-bold' : 'text-slate-400'}`}>
                       {isPayment && hasVal > 0 ? '-' : ''}{formatNumber(hasVal || 0)}
                     </td>
-                    <td className="px-6 py-4 text-sm font-mono text-right text-slate-600">
+                    <td className="px-6 py-4 text-sm font-mono text-right text-slate-400">
                       {!isPayment && pricePerUnit > 0 ? `${formatCurrency(pricePerUnit)} x ${quantity}` : '-'}
                     </td>
-                    <td className={`px-6 py-4 text-sm font-mono text-right ${isPayment ? 'text-green-600 font-bold' : 'text-slate-800 font-bold'}`}>
+                    <td className={`px-6 py-4 text-sm font-mono text-right ${isPayment ? 'text-emerald-400 font-bold' : 'text-slate-200 font-bold'}`}>
                       {isPayment && cashVal > 0 ? '-' : ''}{formatCurrency(cashVal || 0)}
                     </td>
                     <td className="px-6 py-4 text-center">
@@ -1843,18 +1910,18 @@ const CustomerDetail = ({ customer, transactions, dateRange, onClose, isInline =
               })}
 
               {currentPage === totalPages && (
-                <tr className="bg-slate-50 border-t-2 border-slate-200">
-                  <td className="px-6 py-4 text-sm text-slate-500 italic block min-w-[120px]">
+                <tr className="bg-slate-900 border-t-2 border-slate-600">
+                  <td className="px-6 py-4 text-sm text-slate-400 italic block min-w-[120px]">
                     {new Date(dateRange.start).toLocaleDateString('tr-TR')} Öncesi
                   </td>
-                  <td className="px-6 py-4 text-slate-500 font-bold italic" colSpan="3">
+                  <td className="px-6 py-4 text-slate-400 font-bold italic" colSpan="3">
                     DEVİR / ÖNCEKİ BAKİYE
                   </td>
-                  <td className={`px-6 py-4 text-sm font-bold font-mono text-right ${devirHas > 0 ? 'text-red-500' : 'text-green-600'}`}>
+                  <td className={`px-6 py-4 text-sm font-bold font-mono text-right ${devirHas > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
                     {formatNumber(devirHas)}
                   </td>
                   <td className="px-6 py-4"></td>
-                  <td className={`px-6 py-4 text-sm font-bold font-mono text-right ${devirCash > 0 ? 'text-red-500' : 'text-green-600'}`}>
+                  <td className={`px-6 py-4 text-sm font-bold font-mono text-right ${devirCash > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
                     {formatCurrency(devirCash)}
                   </td>
                   <td className="px-6 py-4"></td>
@@ -1870,7 +1937,7 @@ const CustomerDetail = ({ customer, transactions, dateRange, onClose, isInline =
         </div>
 
         {totalPages > 1 && (
-          <div className="p-4 border-t border-slate-200 flex items-center justify-between bg-white rounded-b-2xl pdf-hide">
+          <div className="p-4 border-t border-slate-700 flex items-center justify-between bg-slate-900 rounded-b-2xl pdf-hide">
             <button
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
@@ -1878,7 +1945,7 @@ const CustomerDetail = ({ customer, transactions, dateRange, onClose, isInline =
             >
               <ChevronLeft className="w-4 h-4" /> Önceki
             </button>
-            <span className="text-sm text-slate-600 font-medium">
+            <span className="text-sm text-slate-400 font-medium">
               Sayfa {currentPage} / {totalPages}
             </span>
             <button
@@ -1938,15 +2005,15 @@ const AdminPanel = ({ customers, data, workTypes, onAddCustomer, onDeleteCustome
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-12">
-      <nav className="bg-blue-900 text-white shadow-lg sticky top-0 z-40">
+    <div className="min-h-screen bg-slate-900 pb-12">
+      <nav className="bg-slate-800 text-white shadow-lg sticky top-0 z-40 border-b border-slate-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="bg-white/10 p-2 rounded-lg text-white">
+              <div className="bg-amber-500 p-2 rounded-lg text-slate-900">
                 <LayoutDashboard className="w-5 h-5" />
               </div>
-              <span className="font-semibold text-xl tracking-tight">Yönetim</span>
+              <span className="font-semibold text-xl tracking-tight text-amber-400">Yönetim</span>
             </div>
         <div className="flex items-center gap-2">
               <button type="button" onClick={() => onNavigate('add-transaction')} className={`${BTN_ACCENT} px-4 py-2 text-sm`}>
@@ -1962,8 +2029,8 @@ const AdminPanel = ({ customers, data, workTypes, onAddCustomer, onDeleteCustome
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-            <h2 className="text-lg font-semibold text-slate-800 mb-4">Müşteri Yönetimi</h2>
+          <div className="lg:col-span-1 bg-slate-800 rounded-2xl shadow-lg border border-slate-700 p-6">
+            <h2 className="text-lg font-semibold text-slate-100 mb-4">Müşteri Yönetimi</h2>
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
                 <label className={LABEL_BASE}>Müşteri Adı</label>
@@ -1981,8 +2048,8 @@ const AdminPanel = ({ customers, data, workTypes, onAddCustomer, onDeleteCustome
             </form>
             <div className="mt-6 space-y-2 max-h-[420px] overflow-auto">
               {customers.map(c => (
-                <div key={c.id} className="flex items-center justify-between bg-slate-50/60 border border-slate-200 rounded-xl px-3 py-2">
-                  <span className="text-sm text-slate-700">{c.name}</span>
+                <div key={c.id} className="flex items-center justify-between bg-slate-900/60 border border-slate-600 rounded-xl px-3 py-2">
+                  <span className="text-sm text-slate-300">{c.name}</span>
                   <button
                     className={BTN_ICON}
                     aria-label="Müşteri sil"
@@ -1993,35 +2060,40 @@ const AdminPanel = ({ customers, data, workTypes, onAddCustomer, onDeleteCustome
                 </div>
               ))}
               {customers.length === 0 && (
-                <div className="text-sm text-slate-400">Müşteri yok</div>
+                <div className="flex flex-col items-center py-8">
+                  <div className="empty-state-icon mb-3 p-3 bg-slate-700/50 rounded-full">
+                    <Users className="w-6 h-6 text-slate-500" />
+                  </div>
+                  <p className="text-sm text-slate-500">Müşteri yok</p>
+                </div>
               )}
             </div>
           </div>
 
-          <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="p-6 border-b border-slate-200 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-800">İşlemler (Son 50)</h2>
+          <div className="lg:col-span-2 bg-slate-800 rounded-2xl shadow-lg border border-slate-700 overflow-hidden">
+            <div className="p-6 border-b border-slate-700 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-100">İşlemler (Son 50)</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
-                <thead className="bg-slate-50/60">
+                <thead className="bg-slate-900/60 sticky top-0 z-10">
                   <tr>
-                    <th className="px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Tarih</th>
-                    <th className="px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Müşteri</th>
-                    <th className="px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Tür</th>
-                    <th className="px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Özet</th>
-                    <th className="px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-widest text-right">İşlem</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Tarih</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Müşteri</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Tür</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Özet</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-widest text-right">İşlem</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-700">
                   {entries.map(entry => (
-                    <tr key={entry.id} className="hover:bg-slate-50/60">
-                      <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">{formatDate(entry.date)}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{entry.customerName}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600">
+                    <tr key={entry.id} className="hover:bg-slate-700/50">
+                      <td className="px-4 py-3 text-sm text-slate-400 whitespace-nowrap">{formatDate(entry.date)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-300">{entry.customerName}</td>
+                      <td className="px-4 py-3 text-sm text-slate-400">
                         {entry.type === 'payment' ? 'Ödeme' : 'İşlem'}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-600">
+                      <td className="px-4 py-3 text-sm text-slate-400">
                         {entry.type === 'payment'
                           ? 'Tahsilat'
                           : entry.jobType || 'İşlem'}
@@ -2039,8 +2111,13 @@ const AdminPanel = ({ customers, data, workTypes, onAddCustomer, onDeleteCustome
                   ))}
                   {entries.length === 0 && (
                     <tr>
-                      <td className="px-4 py-6 text-sm text-slate-400" colSpan={5}>
-                        Henüz işlem yok.
+                      <td className="px-4 py-12" colSpan={5}>
+                        <div className="flex flex-col items-center">
+                          <div className="empty-state-icon mb-3 p-3 bg-slate-700/50 rounded-full">
+                            <FileText className="w-6 h-6 text-slate-500" />
+                          </div>
+                          <p className="text-sm text-slate-500">Henüz işlem yok</p>
+                        </div>
                       </td>
                     </tr>
                   )}
@@ -2050,9 +2127,9 @@ const AdminPanel = ({ customers, data, workTypes, onAddCustomer, onDeleteCustome
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <div className="bg-slate-800 rounded-2xl shadow-lg border border-slate-700 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-slate-800">Yapılan İş / Fiyat</h2>
+            <h2 className="text-lg font-semibold text-slate-100">Yapılan İş / Fiyat</h2>
             {workTypes.length === 0 && onImportDefaultPrices && (
               <button
                 type="button"
@@ -2098,18 +2175,18 @@ const AdminPanel = ({ customers, data, workTypes, onAddCustomer, onDeleteCustome
           </form>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-left border-collapse">
-              <thead className="bg-slate-50/60">
+              <thead className="bg-slate-900/60 sticky top-0 z-10">
                 <tr>
-                  <th className="px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-widest">İş</th>
-                  <th className="px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Fiyat</th>
-                  <th className="px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-widest text-right">İşlem</th>
+                  <th className="px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-widest">İş</th>
+                  <th className="px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Fiyat</th>
+                  <th className="px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-widest text-right">İşlem</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-700">
                 {workTypes.map(w => (
-                  <tr key={w.id} className="hover:bg-slate-50/60">
-                    <td className="px-4 py-3 text-sm text-slate-700">{w.name}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">
+                  <tr key={w.id} className="hover:bg-slate-700/50">
+                    <td className="px-4 py-3 text-sm text-slate-300">{w.name}</td>
+                    <td className="px-4 py-3 text-sm text-slate-400">
                       <input
                         type="number"
                         className={INPUT_BASE}
@@ -2140,8 +2217,13 @@ const AdminPanel = ({ customers, data, workTypes, onAddCustomer, onDeleteCustome
                 ))}
                 {workTypes.length === 0 && (
                   <tr>
-                    <td className="px-4 py-6 text-sm text-slate-400" colSpan={3}>
-                      Henüz iş tanımı yok.
+                    <td className="px-4 py-12" colSpan={3}>
+                      <div className="flex flex-col items-center">
+                        <div className="empty-state-icon mb-3 p-3 bg-slate-700/50 rounded-full">
+                          <Inbox className="w-6 h-6 text-slate-500" />
+                        </div>
+                        <p className="text-sm text-slate-500">Henüz iş tanımı yok</p>
+                      </div>
                     </td>
                   </tr>
                 )}
@@ -2733,8 +2815,8 @@ function App() {
 
   if (isAuthLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-sm text-slate-500">Yükleniyor...</div>
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-sm text-slate-400">Yükleniyor...</div>
       </div>
     );
   }

@@ -1,31 +1,140 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary-light: #1e40af;
-  --color-primary: #1e3a8a;
-  --color-primary-dark: #172554;
+  --color-primary-light: #fbbf24;
+  --color-primary: #f59e0b;
+  --color-primary-dark: #d97706;
 
-  --color-secondary-light: #f59e0b;
-  --color-secondary: #d97706;
-  --color-secondary-dark: #b45309;
+  --color-secondary-light: #3b82f6;
+  --color-secondary: #2563eb;
+  --color-secondary-dark: #1d4ed8;
 }
 
 @layer base {
   body {
-    @apply antialiased text-slate-800 bg-slate-50;
+    @apply antialiased text-slate-100 bg-slate-900;
     font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
     letter-spacing: -0.01em;
   }
 }
 
+/* Skeleton Loading Animation */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #334155 0%, #475569 50%, #334155 100%);
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* Modal Animations */
+@keyframes modal-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modal-content-in {
+  from { 
+    opacity: 0; 
+    transform: scale(0.95) translateY(10px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1) translateY(0); 
+  }
+}
+
+.modal-backdrop {
+  animation: modal-backdrop-in 0.2s ease-out;
+}
+
+.modal-content {
+  animation: modal-content-in 0.3s ease-out;
+}
+
+/* Enhanced Hover Effects */
+.card-hover {
+  transition: all 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.4);
+}
+
+.row-hover {
+  transition: all 0.15s ease;
+}
+
+.row-hover:hover {
+  background-color: rgba(71, 85, 105, 0.4) !important;
+  transform: scale(1.002);
+}
+
+/* Input Focus Glow */
+input:focus, select:focus, textarea:focus {
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.15), 0 0 20px rgba(251, 191, 36, 0.1);
+}
+
+/* Floating Action Button Animation */
+@keyframes fab-pulse {
+  0%, 100% { box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4); }
+  50% { box-shadow: 0 4px 25px rgba(245, 158, 11, 0.6); }
+}
+
+.fab-animated {
+  animation: fab-pulse 2s ease-in-out infinite;
+  transition: transform 0.2s ease;
+}
+
+.fab-animated:hover {
+  transform: scale(1.1);
+  animation: none;
+  box-shadow: 0 6px 30px rgba(245, 158, 11, 0.5);
+}
+
+.fab-animated:active {
+  transform: scale(0.95);
+}
+
+/* Toast Animation */
+@keyframes toast-slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast-animated {
+  animation: toast-slide-in 0.3s ease-out;
+}
+
+/* Empty State Animation */
+@keyframes empty-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.empty-state-icon {
+  animation: empty-bounce 2s ease-in-out infinite;
+}
+
 /* Fallback for html2canvas oklch error */
 .pdf-capture-area {
-  background-color: #ffffff !important;
-  color: #1e293b !important;
+  background-color: #0f172a !important;
+  color: #f1f5f9 !important;
 }
 
 .pdf-capture-area * {
-  border-color: #e2e8f0 !important;
+  border-color: #334155 !important;
 }
 
 /* Specific text color overrides */
@@ -38,31 +147,31 @@
 }
 
 .pdf-capture-area .text-slate-600 {
-  color: #475569 !important;
+  color: #94a3b8 !important;
 }
 
 .pdf-capture-area .text-slate-700 {
-  color: #334155 !important;
+  color: #cbd5e1 !important;
 }
 
 .pdf-capture-area .text-slate-800 {
-  color: #1e293b !important;
+  color: #e2e8f0 !important;
 }
 
 .pdf-capture-area .text-blue-900 {
-  color: #1e3a8a !important;
+  color: #60a5fa !important;
 }
 
 .pdf-capture-area .text-blue-600 {
-  color: #2563eb !important;
+  color: #3b82f6 !important;
 }
 
 .pdf-capture-area .text-green-600 {
-  color: #16a34a !important;
+  color: #22c55e !important;
 }
 
 .pdf-capture-area .text-red-600 {
-  color: #dc2626 !important;
+  color: #ef4444 !important;
 }
 
 .pdf-capture-area .text-amber-400 {
@@ -71,15 +180,15 @@
 
 /* Background color overrides */
 .pdf-capture-area .bg-slate-50 {
-  background-color: #f8fafc !important;
+  background-color: #1e293b !important;
 }
 
 .pdf-capture-area .bg-slate-100 {
-  background-color: #f1f5f9 !important;
+  background-color: #1e293b !important;
 }
 
 .pdf-capture-area .bg-blue-50 {
-  background-color: #eff6ff !important;
+  background-color: #1e3a5f !important;
 }
 
 .pdf-capture-area .bg-blue-900 {
@@ -87,7 +196,7 @@
 }
 
 .pdf-capture-area .bg-green-50 {
-  background-color: #f0fdf4 !important;
+  background-color: #14532d !important;
 }
 
 .pdf-capture-area .bg-amber-500\/20 {
@@ -95,7 +204,7 @@
 }
 
 .pdf-capture-area .bg-white {
-  background-color: #ffffff !important;
+  background-color: #1e293b !important;
 }
 
 /* Border overrides */
@@ -104,9 +213,56 @@
 }
 
 .pdf-capture-area .border-slate-200 {
-  border-color: #e2e8f0 !important;
+  border-color: #334155 !important;
 }
 
 .pdf-capture-area .border-amber-500\/30 {
   border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Dark theme for select dropdowns */
+select {
+  background-color: #1e293b;
+  color: #f1f5f9;
+}
+
+select option {
+  background-color: #1e293b;
+  color: #f1f5f9;
+  padding: 8px 12px;
+}
+
+select option:hover,
+select option:focus,
+select option:checked {
+  background-color: #334155;
+  color: #fbbf24;
+}
+
+/* Date input dark theme */
+input[type="date"] {
+  color-scheme: dark;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
 }
