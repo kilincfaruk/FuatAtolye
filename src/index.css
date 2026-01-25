@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary-light: #1e40af;
+  --color-primary: #1e3a8a;
+  --color-primary-dark: #172554;
+
+  --color-secondary-light: #f59e0b;
+  --color-secondary: #d97706;
+  --color-secondary-dark: #b45309;
+}
+
+@layer base {
+  body {
+    @apply antialiased text-slate-800 bg-slate-50;
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* Fallback for html2canvas oklch error */
+.pdf-capture-area {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+}
+
+.pdf-capture-area * {
+  border-color: #e2e8f0 !important;
+}
+
+/* Specific text color overrides */
+.pdf-capture-area .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+.pdf-capture-area .text-slate-500 {
+  color: #64748b !important;
+}
+
+.pdf-capture-area .text-slate-600 {
+  color: #475569 !important;
+}
+
+.pdf-capture-area .text-slate-700 {
+  color: #334155 !important;
+}
+
+.pdf-capture-area .text-slate-800 {
+  color: #1e293b !important;
+}
+
+.pdf-capture-area .text-blue-900 {
+  color: #1e3a8a !important;
+}
+
+.pdf-capture-area .text-blue-600 {
+  color: #2563eb !important;
+}
+
+.pdf-capture-area .text-green-600 {
+  color: #16a34a !important;
+}
+
+.pdf-capture-area .text-red-600 {
+  color: #dc2626 !important;
+}
+
+.pdf-capture-area .text-amber-400 {
+  color: #fbbf24 !important;
+}
+
+/* Background color overrides */
+.pdf-capture-area .bg-slate-50 {
+  background-color: #f8fafc !important;
+}
+
+.pdf-capture-area .bg-slate-100 {
+  background-color: #f1f5f9 !important;
+}
+
+.pdf-capture-area .bg-blue-50 {
+  background-color: #eff6ff !important;
+}
+
+.pdf-capture-area .bg-blue-900 {
+  background-color: #1e3a8a !important;
+}
+
+.pdf-capture-area .bg-green-50 {
+  background-color: #f0fdf4 !important;
+}
+
+.pdf-capture-area .bg-amber-500\/20 {
+  background-color: rgba(245, 158, 11, 0.2) !important;
+}
+
+.pdf-capture-area .bg-white {
+  background-color: #ffffff !important;
+}
+
+/* Border overrides */
+.pdf-capture-area .border-blue-900 {
+  border-color: #1e3a8a !important;
+}
+
+.pdf-capture-area .border-slate-200 {
+  border-color: #e2e8f0 !important;
+}
+
+.pdf-capture-area .border-amber-500\/30 {
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}

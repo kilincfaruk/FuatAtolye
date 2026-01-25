@@ -1,0 +1,17 @@
+{
+    "name": "fuatatolye-server",
+    "version": "1.0.0",
+    "description": "Backend API for gold price scraping",
+    "main": "index.js",
+    "type": "module",
+    "scripts": {
+        "start": "node index.js",
+        "dev": "node --watch index.js"
+    },
+    "dependencies": {
+        "express": "^4.18.2",
+        "axios": "^1.6.0",
+        "cheerio": "^1.0.0-rc.12",
+        "cors": "^2.8.5"
+    }
+}
