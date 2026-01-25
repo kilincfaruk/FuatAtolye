@@ -1,4 +1,4 @@
-# FuatAtolye
+# Kuyumcu Atölyesi Takip Uygulaması
 
 Atölye yönetimi için müşteri, işlem, tahsilat, gider ve fiyat listesi yönetimi sunan React + Supabase uygulaması.
 
