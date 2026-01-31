@@ -23,11 +23,16 @@ const formatNumber = (num) => {
   return new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 2 }).format(num);
 };
 
+const formatGram = (num) => {
+  const value = parseFloat(num) || 0;
+  return value.toFixed(3);
+};
+
 const formatWeightWithPurity = (weightValue, purityValue) => {
   const weight = parseFloat(weightValue);
   if (isNaN(weight) || weight === 0) return '';
   const purity = (purityValue ?? '').toString().trim();
-  const weightText = `${formatNumber(weight)} gr`;
+  const weightText = `${formatGram(weight)} gr`;
   return purity ? `${weightText} (${purity})` : weightText;
 };
 
@@ -255,6 +260,8 @@ const TRANSACTION_PRICES = [
 const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers = [], workTypes = [] }) => {
   const [activeTab, setActiveTab] = useState('job');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [goldPriceForPrint, setGoldPriceForPrint] = useState('');
 
   const [jobData, setJobData] = useState({
     customer: '',
@@ -399,13 +406,22 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
       showToast('Lütfen önce işlem detaylarını doldurun.', 'warning');
       return;
     }
+    setShowPrintModal(true);
+  };
 
+  const handlePrintConfirm = () => {
     const printWindow = window.open('', '_blank', 'width=400,height=600');
     if (!printWindow) return;
 
-    const hasLabel = isSilverMilyem(jobData.milyem) ? 'Gümüş' : 'Has Altın';
-    const hasValue = calculatedJobHas ? `${calculatedJobHas} gr` : '';
+    const isSilver = isSilverMilyem(jobData.milyem);
+    const hasLabel = isSilver ? 'Gümüş' : 'Has Altın';
+    const hasValue = calculatedJobHas ? parseFloat(calculatedJobHas) : 0;
+    const hasValueStr = hasValue ? `${hasValue.toFixed(3)} gr` : '';
     const weightDesc = formatWeightWithPurity(jobData.goldWeight, jobData.milyem);
+    
+    const goldPrice = parseFloat(goldPriceForPrint) || 0;
+    const hasTLValue = !isSilver && hasValue && goldPrice ? (hasValue * goldPrice) : 0;
+    
     const htmlContent = `
       <html>
         <head>
@@ -416,6 +432,8 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
             .info { font-size: 14px; margin-bottom: 20px; text-align: left; }
             .info div { margin-bottom: 5px; }
             .content { font-size: 16px; font-weight: bold; margin: 20px 0; border: 1px dashed #000; padding: 15px; }
+            .gold-calc { font-size: 12px; margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 4px; text-align: left; }
+            .gold-calc div { margin-bottom: 4px; }
             .footer { font-size: 12px; margin-top: 30px; border-top: 1px solid #000; padding-top: 10px; }
             @media print {
               @page { margin: 0; size: 80mm auto; }
@@ -439,10 +457,24 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
               ${jobData.quantity > 1 ? `Adet: ${jobData.quantity}<br>` : ''}
               ${weightDesc ? `${weightDesc}` : ''}
             </div>
-            ${hasValue ? `<div style="font-size: 13px; margin-top: 6px;">${hasLabel}: ${hasValue}</div>` : ''}
+            ${hasValueStr ? `<div style="font-size: 13px; margin-top: 6px;">${hasLabel}: ${hasValueStr}</div>` : ''}
             ${jobData.note ? `<div style="font-size: 12px; margin-top: 6px;">Not: ${jobData.note}</div>` : ''}
             ${jobData.price ? `<div style="margin-top: 10px; font-size: 20px;">${formatCurrency(jobData.price)}</div>` : ''}
+            ${jobData.isPaid ? `<div style="margin-top: 10px; padding: 8px; background: #d4edda; border: 2px solid #28a745; border-radius: 4px; color: #155724; font-size: 14px; font-weight: bold;">✓ PEŞİN ALINDI</div>` : ''}
           </div>
+          
+          ${!isSilver && goldPrice > 0 && hasValue > 0 ? `
+          <div class="gold-calc">
+            <div><strong>Has Altın Gram Fiyatı:</strong> ${formatCurrency(goldPrice)}</div>
+            <div><strong>${hasLabel} Borcu:</strong> ${hasValue.toFixed(3)} gr</div>
+            <div style="font-size: 14px; font-weight: bold; margin-top: 6px; padding-top: 6px; border-top: 1px dashed #999;">
+              <strong>TL Karşılığı:</strong> ${formatCurrency(hasTLValue)}
+            </div>
+            <div style="font-size: 10px; color: #666; margin-top: 4px;">
+              * altinkaynak.com referans fiyatı
+            </div>
+          </div>
+          ` : ''}
           
           <div class="footer">
             Teşekkür Ederiz<br>
@@ -457,6 +489,8 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
 
     printWindow.document.write(htmlContent);
     printWindow.document.close();
+    setShowPrintModal(false);
+    setGoldPriceForPrint('');
   };
 
   const normalizedIncludes = (value, query) =>
@@ -651,15 +685,15 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
                   <label className={LABEL_BASE}>{isSilverMilyem(jobData.milyem) ? 'Gümüş (Gr)' : 'Altın (Gr)'}</label>
                   <input
                     type="number"
-                    step="0.01"
-                    placeholder="0.00"
+                    step="0.001"
+                    placeholder="0.000"
                     className={INPUT_BASE}
                     value={jobData.goldWeight}
                     onChange={e => setJobData({ ...jobData, goldWeight: e.target.value })}
                   />
                   {calculatedJobHas && (
                     <p className="text-[10px] text-emerald-400 mt-1 font-bold bg-emerald-900/50 px-1 py-0.5 rounded inline-block">
-                      {isSilverMilyem(jobData.milyem) ? 'Gümüş' : 'Has'}: {calculatedJobHas}
+                      {isSilverMilyem(jobData.milyem) ? 'Gümüş' : 'Has'}: {parseFloat(calculatedJobHas).toFixed(3)} gr
                     </p>
                   )}
                 </div>
@@ -744,8 +778,8 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
                 <label className={LABEL_BASE}>Has Altın (Gr)</label>
                 <input
                   type="number"
-                  step="0.01"
-                  placeholder="0.00"
+                  step="0.001"
+                  placeholder="0.000"
                   className={INPUT_BASE}
                   value={paymentData.hasAmount}
                   onChange={e => setPaymentData({ ...paymentData, hasAmount: e.target.value })}
@@ -757,8 +791,8 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
                 <label className={LABEL_BASE}>Gümüş (Gr)</label>
                 <input
                   type="number"
-                  step="0.01"
-                  placeholder="0.00"
+                  step="0.001"
+                  placeholder="0.000"
                   className={INPUT_BASE}
                   value={paymentData.silverAmount}
                   onChange={e => setPaymentData({ ...paymentData, silverAmount: e.target.value })}
@@ -832,6 +866,79 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
           )}
         </div>
       </div>
+
+      {showPrintModal && (
+        <div className="modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setShowPrintModal(false)}>
+          <div className="modal-content bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-slate-100">Adisyon Yazdır</h3>
+              <button onClick={() => setShowPrintModal(false)} className={BTN_ICON}>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className={LABEL_BASE}>Has Altın Gram Fiyatı (TL)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="Örn: 3250.00"
+                  className={INPUT_BASE}
+                  value={goldPriceForPrint}
+                  onChange={e => setGoldPriceForPrint(e.target.value)}
+                  autoFocus
+                />
+                <a 
+                  href="https://www.altinkaynak.com/Altin/Kur/Guncel" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 mt-2 text-xs text-amber-400 hover:text-amber-300"
+                >
+                  <TrendingUp className="w-3 h-3" />
+                  altinkaynak.com güncel fiyatlar
+                </a>
+              </div>
+
+              {calculatedJobHas && !isSilverMilyem(jobData.milyem) && goldPriceForPrint && (
+                <div className="p-4 bg-slate-900 rounded-xl border border-slate-700">
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-slate-400">Has Altın:</span>
+                    <span className="text-slate-200 font-mono">{parseFloat(calculatedJobHas).toFixed(3)} gr</span>
+                  </div>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-slate-400">Gram Fiyatı:</span>
+                    <span className="text-slate-200 font-mono">{formatCurrency(parseFloat(goldPriceForPrint) || 0)}</span>
+                  </div>
+                  <div className="flex justify-between text-base pt-2 border-t border-slate-700">
+                    <span className="text-slate-300 font-semibold">TL Karşılığı:</span>
+                    <span className="text-amber-400 font-bold font-mono">
+                      {formatCurrency((parseFloat(calculatedJobHas) || 0) * (parseFloat(goldPriceForPrint) || 0))}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowPrintModal(false)}
+                  className={`${BTN_SECONDARY} flex-1 py-3`}
+                >
+                  İptal
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePrintConfirm}
+                  className={`${BTN_PRIMARY} flex-1 py-3`}
+                >
+                  <Printer className="w-4 h-4" /> Yazdır
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -853,6 +960,8 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [expenseTypeFilter, setExpenseTypeFilter] = useState('Tümü');
   const [expenseQuery, setExpenseQuery] = useState('');
+  const [showListPrintModal, setShowListPrintModal] = useState(false);
+  const [listPrintGoldPrice, setListPrintGoldPrice] = useState('');
 
   useEffect(() => {
     const fetchGoldPrice = async () => {
@@ -1201,112 +1310,7 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
               <div className="hidden sm:block w-px bg-slate-600 my-1"></div>
 
               <button
-                onClick={() => {
-                  const printWindow = window.open('', '_blank', 'width=800,height=800');
-                  if (!printWindow) return;
-
-                  const sortedCustomers = Object.keys(filteredData).sort();
-
-                  let htmlContent = `
-                    <html>
-                      <head>
-                        <title>İşlem Raporu</title>
-                        <style>
-                          body { font-family: 'Courier New', monospace; padding: 20px; }
-                          .report-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-                          .customer-section { margin-bottom: 30px; page-break-inside: avoid; }
-                          .customer-title { font-size: 16px; font-weight: bold; margin-bottom: 5px; background: #eee; padding: 5px; }
-                          table { width: 100%; border-collapse: collapse; font-size: 12px; }
-                          th, td { border-bottom: 1px solid #ddd; padding: 5px; text-align: left; }
-                          th { background: #f9f9f9; }
-                          .text-right { text-align: right; }
-                          .totals { font-weight: bold; border-top: 1px solid #000; margin-top: 5px; padding-top: 5px; display: flex; justify-content: space-between; font-size: 12px; }
-                           @media print {
-                            @page { size: 80mm auto; margin: 0; }
-                            body { margin: 5mm; }
-                          }
-                        </style>
-                      </head>
-                      <body>
-                        <div class="report-header">
-                          <strong>${APP_NAME}</strong><br>
-                          İŞLEM RAPORU<br>
-                          <span style="font-size: 12px">
-                            ${new Date(dateRange.start).toLocaleDateString('tr-TR')} - ${new Date(dateRange.end).toLocaleDateString('tr-TR')}
-                          </span>
-                        </div>
-                   `;
-
-                  sortedCustomers.forEach(customer => {
-                    const txs = filteredData[customer].sort((a, b) => new Date(a.date || a.tarih) - new Date(b.date || b.tarih));
-
-                    let totalHas = 0;
-                    let totalCash = 0;
-
-                    let rows = txs.map(t => {
-                      const isPayment = t.type === 'payment';
-                      const date = new Date(t.date || t.tarih).toLocaleDateString('tr-TR');
-                    let desc = isPayment ? 'Ödeme / Tahsilat' : (t.jobType || 'İşlem');
-                    if (t.note) desc = `${desc} - Not: ${t.note}`;
-                      const quantity = t.quantity || 1;
-
-                      let hasVal = 0, cashVal = 0, pricePerUnit = 0;
-                      if (isPayment) {
-                        hasVal = -parseFloat(t.hasAmount || 0);
-                        cashVal = -parseFloat(t.cashAmount || 0);
-                      } else {
-                        hasVal = parseFloat(t.has || 0);
-                        pricePerUnit = parseFloat(t.price || t.ucret || 0);
-                        cashVal = pricePerUnit * quantity;
-                      }
-
-                      totalHas += hasVal;
-                      totalCash += cashVal;
-
-                      return `
-                          <tr>
-                            <td>${date}</td>
-                            <td>${desc}</td>
-                            <td class="text-right">${!isPayment ? quantity : '-'}</td>
-                            <td class="text-right">${hasVal !== 0 ? formatNumber(hasVal) : '-'}</td>
-                            <td class="text-right">${!isPayment && pricePerUnit > 0 ? formatNumber(pricePerUnit) + ' x ' + quantity : '-'}</td>
-                            <td class="text-right">${cashVal !== 0 ? formatNumber(cashVal) : '-'}</td>
-                          </tr>
-                        `;
-                    }).join('');
-
-                    htmlContent += `
-                        <div class="customer-section">
-                          <div class="customer-title">${customer}</div>
-                          <table>
-                            <thead>
-                              <tr>
-                                <th>Tarih</th>
-                                <th>İşlem</th>
-                                <th class="text-right">Adet</th>
-                                <th class="text-right">Has</th>
-                                <th class="text-right">Birim Fiyat</th>
-                                <th class="text-right">Toplam</th>
-                              </tr>
-                            </thead>
-                            <tbody>${rows}</tbody>
-                          </table>
-                          <div class="totals">
-                             <span>Dönem Net:</span>
-                             <span>Has: ${formatNumber(totalHas)} | Nakit: ${formatNumber(totalCash)}</span>
-                          </div>
-                        </div>
-                      `;
-                  });
-
-                  htmlContent += `
-                      <script>window.onload = function() { window.print(); window.close(); }</script>
-                      </body></html>
-                   `;
-
-                  printWindow.document.write(htmlContent);
-                  printWindow.document.close();
-                }}
+                onClick={() => setShowListPrintModal(true)}
                 className={`${BTN_TONAL} px-3 py-2 text-sm`}
                 title="Listeyi Yazdır"
                 aria-label="Listeyi yazdır"
@@ -1376,13 +1380,13 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
           />
           <StatCard
             title="Has Alacak (Gr)"
-            value={`${formatNumber(stats.totalHasReceivables)}`}
+            value={`${formatGram(stats.totalHasReceivables)}`}
             iconClass="bg-indigo-900/50 text-indigo-400"
             icon={TrendingUp}
           />
           <StatCard
             title="Gümüş Bakiye (Gr)"
-            value={`${formatNumber(stats.totalSilverReceivables)}`}
+            value={`${formatGram(stats.totalSilverReceivables)}`}
             iconClass="bg-slate-700 text-slate-300"
             icon={TrendingUp}
           />
@@ -1499,13 +1503,13 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
                     >
                       <td className="px-6 py-4 text-sm font-medium text-slate-200 group-hover:text-white">{customer.name}</td>
                       <td className="px-6 py-4 text-sm text-slate-400">{customer.count}</td>
-                      <td className="px-6 py-4 text-sm text-slate-400 font-mono">{formatNumber(customer.goldVolume)}</td>
-                      <td className="px-6 py-4 text-sm text-slate-400 font-mono">{formatNumber(customer.silverVolume || 0)}</td>
+                      <td className="px-6 py-4 text-sm text-slate-400 font-mono">{formatGram(customer.goldVolume)}</td>
+                      <td className="px-6 py-4 text-sm text-slate-400 font-mono">{formatGram(customer.silverVolume || 0)}</td>
                       <td className={`px-6 py-4 text-sm font-bold font-mono ${customer.hasBalance > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
-                        {formatNumber(customer.hasBalance)}
+                        {formatGram(customer.hasBalance)}
                       </td>
                       <td className={`px-6 py-4 text-sm font-bold font-mono ${customer.silverBalance > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
-                        {formatNumber(customer.silverBalance || 0)}
+                        {formatGram(customer.silverBalance || 0)}
                       </td>
                       <td className="px-6 py-4 text-sm font-bold text-emerald-400 font-mono">{formatCurrency(customer.income)}</td>
                       <td className={`px-6 py-4 text-sm font-bold font-mono ${customer.cashBalance > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
@@ -1616,6 +1620,174 @@ const Dashboard = ({ user, onLogout, onNavigate, data, expenses, onEdit, showToa
             </div>
           </div>
         )}
+
+        {showListPrintModal && (
+          <div className="modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setShowListPrintModal(false)}>
+            <div className="modal-content bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold text-slate-100">Listeyi Yazdır</h3>
+                <button onClick={() => setShowListPrintModal(false)} className={BTN_ICON}>
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className={LABEL_BASE}>Has Altın Gram Fiyatı (TL) - Opsiyonel</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="Boş bırakılabilir"
+                    className={INPUT_BASE}
+                    value={listPrintGoldPrice}
+                    onChange={e => setListPrintGoldPrice(e.target.value)}
+                    autoFocus
+                  />
+                  <a 
+                    href="https://www.altinkaynak.com/Altin/Kur/Guncel" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 mt-2 text-xs text-amber-400 hover:text-amber-300"
+                  >
+                    <TrendingUp className="w-3 h-3" />
+                    altinkaynak.com güncel fiyatlar
+                  </a>
+                  <p className="text-xs text-slate-400 mt-1">Girilirse Has Altın borcunun TL karşılığı da yazdırılır.</p>
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setShowListPrintModal(false)}
+                    className={`${BTN_SECONDARY} flex-1 py-3`}
+                  >
+                    İptal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const printWindow = window.open('', '_blank', 'width=800,height=800');
+                      if (!printWindow) return;
+
+                      const sortedCustomers = Object.keys(filteredData).sort();
+                      const goldPriceVal = parseFloat(listPrintGoldPrice) || 0;
+
+                      let htmlContent = `
+                        <html>
+                          <head>
+                            <title>İşlem Raporu</title>
+                            <style>
+                              body { font-family: 'Courier New', monospace; padding: 20px; }
+                              .report-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+                              .customer-section { margin-bottom: 30px; page-break-inside: avoid; }
+                              .customer-title { font-size: 16px; font-weight: bold; margin-bottom: 5px; background: #eee; padding: 5px; }
+                              table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                              th, td { border-bottom: 1px solid #ddd; padding: 5px; text-align: left; }
+                              th { background: #f9f9f9; }
+                              .text-right { text-align: right; }
+                              .totals { font-weight: bold; border-top: 1px solid #000; margin-top: 5px; padding-top: 5px; font-size: 12px; }
+                              .tl-equiv { background: #fff8e1; padding: 8px; margin-top: 5px; border-radius: 4px; font-size: 11px; }
+                              @media print {
+                                @page { size: 80mm auto; margin: 0; }
+                                body { margin: 5mm; }
+                              }
+                            </style>
+                          </head>
+                          <body>
+                            <div class="report-header">
+                              <strong>${APP_NAME}</strong><br>
+                              İŞLEM RAPORU<br>
+                              <span style="font-size: 12px">
+                                ${new Date(dateRange.start).toLocaleDateString('tr-TR')} - ${new Date(dateRange.end).toLocaleDateString('tr-TR')}
+                              </span>
+                              ${goldPriceVal > 0 ? `<br><span style="font-size: 11px; color: #666;">Has Altın: ${formatCurrency(goldPriceVal)}/gr</span>` : ''}
+                            </div>
+                       `;
+
+                      sortedCustomers.forEach(customer => {
+                        const txs = filteredData[customer].sort((a, b) => new Date(a.date || a.tarih) - new Date(b.date || b.tarih));
+
+                        let totalHas = 0;
+                        let totalCash = 0;
+
+                        let rows = txs.map(t => {
+                          const isPayment = t.type === 'payment';
+                          const date = new Date(t.date || t.tarih).toLocaleDateString('tr-TR');
+                          let desc = isPayment ? 'Ödeme / Tahsilat' : (t.jobType || 'İşlem');
+                          if (t.note) desc = `${desc} - Not: ${t.note}`;
+                          const quantity = t.quantity || 1;
+
+                          let hasVal = 0, cashVal = 0, pricePerUnit = 0;
+                          if (isPayment) {
+                            hasVal = -parseFloat(t.hasAmount || 0);
+                            cashVal = -parseFloat(t.cashAmount || 0);
+                          } else {
+                            hasVal = parseFloat(t.has || 0);
+                            pricePerUnit = parseFloat(t.price || t.ucret || 0);
+                            cashVal = pricePerUnit * quantity;
+                          }
+
+                          totalHas += hasVal;
+                          totalCash += cashVal;
+
+                          return `
+                              <tr>
+                                <td>${date}</td>
+                                <td>${desc}</td>
+                                <td class="text-right">${!isPayment ? quantity : '-'}</td>
+                                <td class="text-right">${hasVal !== 0 ? hasVal.toFixed(3) : '-'}</td>
+                                <td class="text-right">${!isPayment && pricePerUnit > 0 ? formatNumber(pricePerUnit) + ' x ' + quantity : '-'}</td>
+                                <td class="text-right">${cashVal !== 0 ? formatNumber(cashVal) : '-'}</td>
+                              </tr>
+                            `;
+                        }).join('');
+
+                        const hasTLEquiv = goldPriceVal > 0 && totalHas !== 0 ? totalHas * goldPriceVal : 0;
+
+                        htmlContent += `
+                            <div class="customer-section">
+                              <div class="customer-title">${customer}</div>
+                              <table>
+                                <thead>
+                                  <tr>
+                                    <th>Tarih</th>
+                                    <th>İşlem</th>
+                                    <th class="text-right">Adet</th>
+                                    <th class="text-right">Has</th>
+                                    <th class="text-right">Birim Fiyat</th>
+                                    <th class="text-right">Toplam</th>
+                                  </tr>
+                                </thead>
+                                <tbody>${rows}</tbody>
+                              </table>
+                              <div class="totals">
+                                 <div>Dönem Net: Has: ${totalHas.toFixed(3)} gr | Nakit: ${formatNumber(totalCash)} TL</div>
+                                 ${hasTLEquiv !== 0 ? `<div class="tl-equiv"><strong>Has Altın TL Karşılığı:</strong> ${formatCurrency(hasTLEquiv)} (${totalHas.toFixed(3)} gr × ${formatCurrency(goldPriceVal)})</div>` : ''}
+                              </div>
+                            </div>
+                          `;
+                      });
+
+                      htmlContent += `
+                          ${goldPriceVal > 0 ? `<div style="font-size: 10px; color: #666; margin-top: 20px; text-align: center;">* Has Altın fiyatı altinkaynak.com referans alınmıştır.</div>` : ''}
+                          <script>window.onload = function() { window.print(); window.close(); }</script>
+                          </body></html>
+                       `;
+
+                      printWindow.document.write(htmlContent);
+                      printWindow.document.close();
+                      setShowListPrintModal(false);
+                      setListPrintGoldPrice('');
+                    }}
+                    className={`${BTN_PRIMARY} flex-1 py-3`}
+                  >
+                    <Printer className="w-4 h-4" /> Yazdır
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
@@ -1659,7 +1831,7 @@ const CustomerDetail = ({ customer, transactions, dateRange, onClose, isInline =
         'İşlem / Tür': label,
         Açıklama: desc,
         Adet: !isPayment ? quantity : '-',
-        'Has (Gr)': formatNumber(hasVal || 0),
+        'Has (Gr)': formatGram(hasVal || 0),
         'Birim Fiyat': !isPayment && pricePerUnit > 0 ? `${formatNumber(pricePerUnit)} x ${quantity}` : '-',
         'Toplam (TL)': formatCurrency(cashVal || 0),
         Not: t.note || ''
@@ -1765,7 +1937,7 @@ const CustomerDetail = ({ customer, transactions, dateRange, onClose, isInline =
             <div className="flex items-center gap-2">
               <span className="text-slate-400">Son Has Bakiye:</span>
               <span className={`font-bold font-mono ${finalHasBalance > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
-                {formatNumber(finalHasBalance)} gr
+                {formatGram(finalHasBalance)} gr
               </span>
             </div>
             <div className="w-px h-4 bg-slate-600"></div>
@@ -1778,7 +1950,7 @@ const CustomerDetail = ({ customer, transactions, dateRange, onClose, isInline =
             <div className="w-px h-4 bg-slate-600"></div>
             <div className="flex items-center gap-2">
               <span className="text-slate-400">Dönem İşlenen:</span>
-              <span className="font-medium text-slate-200">{formatNumber(periodTotals.totalGold)} gr</span>
+              <span className="font-medium text-slate-200">{formatGram(periodTotals.totalGold)} gr</span>
             </div>
           </div>
           <div className="text-xs text-slate-500 mt-2">
@@ -1885,7 +2057,7 @@ const CustomerDetail = ({ customer, transactions, dateRange, onClose, isInline =
                       {!isPayment ? quantity : '-'}
                     </td>
                     <td className={`px-6 py-4 text-sm font-mono text-right ${isPayment ? 'text-emerald-400 font-bold' : 'text-slate-400'}`}>
-                      {isPayment && hasVal > 0 ? '-' : ''}{formatNumber(hasVal || 0)}
+                      {isPayment && hasVal > 0 ? '-' : ''}{formatGram(hasVal || 0)}
                     </td>
                     <td className="px-6 py-4 text-sm font-mono text-right text-slate-400">
                       {!isPayment && pricePerUnit > 0 ? `${formatCurrency(pricePerUnit)} x ${quantity}` : '-'}
@@ -1918,7 +2090,7 @@ const CustomerDetail = ({ customer, transactions, dateRange, onClose, isInline =
                     DEVİR / ÖNCEKİ BAKİYE
                   </td>
                   <td className={`px-6 py-4 text-sm font-bold font-mono text-right ${devirHas > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
-                    {formatNumber(devirHas)}
+                    {formatGram(devirHas)}
                   </td>
                   <td className="px-6 py-4"></td>
                   <td className={`px-6 py-4 text-sm font-bold font-mono text-right ${devirCash > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
