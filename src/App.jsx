@@ -330,13 +330,19 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
     return v.includes('silver') || v.includes('gümüş') || v.includes('gumus');
   };
 
+  const parseLocalNumber = (value) => {
+    if (!value) return NaN;
+    const normalized = value.toString().replace(',', '.');
+    return parseFloat(normalized);
+  };
+
   const calculatedJobHas = useMemo(() => {
     if (jobData.goldWeight) {
-      const g = parseFloat(jobData.goldWeight);
-      if (isNaN(g)) return '';
+      const g = parseLocalNumber(jobData.goldWeight);
+      if (isNaN(g) || g <= 0) return '';
       if (isSilverMilyem(jobData.milyem)) return g.toFixed(3);
-      const m = parseFloat(jobData.milyem);
-      if (!isNaN(m)) return (m * g).toFixed(3);
+      const m = parseLocalNumber(jobData.milyem);
+      if (!isNaN(m) && m > 0 && m <= 1) return (m * g).toFixed(3);
     }
     return '';
   }, [jobData.milyem, jobData.goldWeight]);
@@ -684,12 +690,16 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
                 <div>
                   <label className={LABEL_BASE}>{isSilverMilyem(jobData.milyem) ? 'Gümüş (Gr)' : 'Altın (Gr)'}</label>
                   <input
-                    type="number"
-                    step="0.001"
+                    type="text"
+                    inputMode="decimal"
+                    pattern="[0-9]*[.,]?[0-9]*"
                     placeholder="0.000"
                     className={INPUT_BASE}
                     value={jobData.goldWeight}
-                    onChange={e => setJobData({ ...jobData, goldWeight: e.target.value })}
+                    onChange={e => {
+                      const val = e.target.value.replace(',', '.');
+                      setJobData({ ...jobData, goldWeight: val });
+                    }}
                   />
                   {calculatedJobHas && (
                     <p className="text-[10px] text-emerald-400 mt-1 font-bold bg-emerald-900/50 px-1 py-0.5 rounded inline-block">
@@ -777,12 +787,16 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
               <div>
                 <label className={LABEL_BASE}>Has Altın (Gr)</label>
                 <input
-                  type="number"
-                  step="0.001"
+                  type="text"
+                  inputMode="decimal"
+                  pattern="[0-9]*[.,]?[0-9]*"
                   placeholder="0.000"
                   className={INPUT_BASE}
                   value={paymentData.hasAmount}
-                  onChange={e => setPaymentData({ ...paymentData, hasAmount: e.target.value })}
+                  onChange={e => {
+                    const val = e.target.value.replace(',', '.');
+                    setPaymentData({ ...paymentData, hasAmount: val });
+                  }}
                 />
                 <p className="text-xs text-slate-400 mt-1">Varsa hurda/has ödemesi</p>
               </div>
@@ -790,12 +804,16 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
               <div>
                 <label className={LABEL_BASE}>Gümüş (Gr)</label>
                 <input
-                  type="number"
-                  step="0.001"
+                  type="text"
+                  inputMode="decimal"
+                  pattern="[0-9]*[.,]?[0-9]*"
                   placeholder="0.000"
                   className={INPUT_BASE}
                   value={paymentData.silverAmount}
-                  onChange={e => setPaymentData({ ...paymentData, silverAmount: e.target.value })}
+                  onChange={e => {
+                    const val = e.target.value.replace(',', '.');
+                    setPaymentData({ ...paymentData, silverAmount: val });
+                  }}
                 />
                 <p className="text-xs text-slate-400 mt-1">Gümüş ödemesi varsa</p>
               </div>
