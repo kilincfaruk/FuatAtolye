@@ -12,7 +12,7 @@ import * as XLSX from 'xlsx';
 import { supabase } from './supabaseClient.js';
 
 
-const APP_NAME = "KUYUMCU ATÖLYESİ";
+const APP_NAME = "FUAT KUYUMCU ATÖLYESİ";
 
 
 const formatCurrency = (amount) => {
