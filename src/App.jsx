@@ -286,6 +286,8 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
     hasAmount: '',
     silverAmount: '',
     cashAmount: '',
+    cashAmountUsd: '',
+    note: '',
     date: new Date().toISOString().split('T')[0]
   });
 
@@ -306,6 +308,8 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
           hasAmount: initialData.hasAmount || '',
           silverAmount: initialData.silverAmount || '',
           cashAmount: initialData.cashAmount || '',
+          cashAmountUsd: initialData.cashAmountUsd || '',
+          note: initialData.note || '',
           date: initialData.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
         });
       } else if (initialData.type === 'job' || (!initialData.type && initialData.tamiratIsi)) {
@@ -773,49 +777,73 @@ const TransactionForm = ({ onBack, onSubmit, initialData, showToast, customers =
                 />
               </div>
 
-              <div>
-                <label className={LABEL_BASE}>Nakit Tutar (TL)</label>
-                <input
-                  type="number"
-                  placeholder="0.00"
-                  className={INPUT_BASE}
-                  value={paymentData.cashAmount}
-                  onChange={e => setPaymentData({ ...paymentData, cashAmount: e.target.value })}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={LABEL_BASE}>Nakit Tutar (TL)</label>
+                  <input
+                    type="number"
+                    placeholder="0.00"
+                    className={INPUT_BASE}
+                    value={paymentData.cashAmount}
+                    onChange={e => setPaymentData({ ...paymentData, cashAmount: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className={LABEL_BASE}>Nakit Tutar (USD)</label>
+                  <input
+                    type="number"
+                    placeholder="0.00"
+                    className={INPUT_BASE}
+                    value={paymentData.cashAmountUsd}
+                    onChange={e => setPaymentData({ ...paymentData, cashAmountUsd: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={LABEL_BASE}>Has Altın (Gr)</label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    pattern="[0-9]*[.,]?[0-9]*"
+                    placeholder="0.000"
+                    className={INPUT_BASE}
+                    value={paymentData.hasAmount}
+                    onChange={e => {
+                      const val = e.target.value.replace(',', '.');
+                      setPaymentData({ ...paymentData, hasAmount: val });
+                    }}
+                  />
+                  <p className="text-xs text-slate-400 mt-1">Varsa hurda/has ödemesi</p>
+                </div>
+                <div>
+                  <label className={LABEL_BASE}>Gümüş (Gr)</label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    pattern="[0-9]*[.,]?[0-9]*"
+                    placeholder="0.000"
+                    className={INPUT_BASE}
+                    value={paymentData.silverAmount}
+                    onChange={e => {
+                      const val = e.target.value.replace(',', '.');
+                      setPaymentData({ ...paymentData, silverAmount: val });
+                    }}
+                  />
+                  <p className="text-xs text-slate-400 mt-1">Gümüş ödemesi varsa</p>
+                </div>
               </div>
 
               <div>
-                <label className={LABEL_BASE}>Has Altın (Gr)</label>
+                <label className={LABEL_BASE}>Not (Opsiyonel)</label>
                 <input
                   type="text"
-                  inputMode="decimal"
-                  pattern="[0-9]*[.,]?[0-9]*"
-                  placeholder="0.000"
+                  placeholder="Ödeme notu..."
                   className={INPUT_BASE}
-                  value={paymentData.hasAmount}
-                  onChange={e => {
-                    const val = e.target.value.replace(',', '.');
-                    setPaymentData({ ...paymentData, hasAmount: val });
-                  }}
+                  value={paymentData.note}
+                  onChange={e => setPaymentData({ ...paymentData, note: e.target.value })}
                 />
-                <p className="text-xs text-slate-400 mt-1">Varsa hurda/has ödemesi</p>
-              </div>
-
-              <div>
-                <label className={LABEL_BASE}>Gümüş (Gr)</label>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  pattern="[0-9]*[.,]?[0-9]*"
-                  placeholder="0.000"
-                  className={INPUT_BASE}
-                  value={paymentData.silverAmount}
-                  onChange={e => {
-                    const val = e.target.value.replace(',', '.');
-                    setPaymentData({ ...paymentData, silverAmount: val });
-                  }}
-                />
-                <p className="text-xs text-slate-400 mt-1">Gümüş ödemesi varsa</p>
               </div>
 
               <button
@@ -2466,7 +2494,7 @@ function App() {
     const [customersRes, transactionsRes, paymentsRes, expensesRes] = await Promise.all([
       supabase.from('customers').select('id, name'),
       supabase.from('transactions').select('id, customer_id, job_type, quantity, milyem, gold_weight, price, has, is_paid, date, note, is_edited, last_edited_at'),
-      supabase.from('payments').select('id, customer_id, has_amount, silver_amount, cash_amount, date, note, is_auto_generated, is_edited, last_edited_at'),
+      supabase.from('payments').select('id, customer_id, has_amount, silver_amount, cash_amount, cash_amount_usd, date, note, is_auto_generated, is_edited, last_edited_at'),
       supabase.from('expenses').select('id, type, description, amount, date')
     ]);
     const workTypesRes = await supabase.from('work_types').select('id, name, default_price, is_active');
@@ -2528,6 +2556,7 @@ function App() {
         hasAmount: p.has_amount,
         silverAmount: p.silver_amount,
         cashAmount: p.cash_amount,
+        cashAmountUsd: p.cash_amount_usd,
         date: p.date,
         note: p.note || '',
         autoGenerated: p.is_auto_generated,
@@ -2784,6 +2813,7 @@ function App() {
               has_amount: parseFloat(formData.hasAmount || 0),
               silver_amount: parseFloat(formData.silverAmount || 0),
               cash_amount: parseFloat(formData.cashAmount || 0),
+              cash_amount_usd: parseFloat(formData.cashAmountUsd || 0),
               date: formData.date,
               note: formData.note || '',
               is_edited: true,
@@ -2800,6 +2830,7 @@ function App() {
             has_amount: parseFloat(formData.hasAmount || 0),
             silver_amount: parseFloat(formData.silverAmount || 0),
             cash_amount: parseFloat(formData.cashAmount || 0),
+            cash_amount_usd: parseFloat(formData.cashAmountUsd || 0),
             date: formData.date,
             note: formData.note || '',
             is_auto_generated: false,
